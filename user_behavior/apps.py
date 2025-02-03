@@ -7,3 +7,6 @@ class UserBehaviorConfig(AppConfig):
     name = "user_behavior"
     verbose_name = _("Django User Behavior")
 
+
+    def ready(self):
+        import user_behavior.signals.models
