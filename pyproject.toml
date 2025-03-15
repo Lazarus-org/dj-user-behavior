@@ -6,9 +6,9 @@ requires = [ "poetry-core>=2,<3" ]
 [project]
 name = "dj-user-behavior"
 version = "1.0.0"
-description = ""
+description = "A Django package to streamline the tracking, management, and analysis of user behavior within Django applications."
 readme = "README.md"
-keywords = [ "django", "django user behavior", "behavior", "user behavior" ]
+keywords = [ "behavior", "django", "django user behavior", "user behavior" ]
 
 license = { text = "MIT" }
 authors = [
@@ -192,7 +192,7 @@ markers = [
   "settings_checks: Marks tests for settings validation, ensuring that required settings are correctly configured.",
   "validators: Marks tests for custom validators used throughout the project.",
   "config_validators: Marks tests for configuration validators that validate the config values in project settings.",
-  "signals: Marks tests for roject related signals."
+  "signals: Marks tests for roject related signals.",
 ]
 
 norecursedirs = [
