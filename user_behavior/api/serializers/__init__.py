@@ -1,3 +1,0 @@
-from .page_view import PageViewSerializer
-from .user_interaction import UserInteractionSerializer
-from .user_session import UserSessionSerializer
