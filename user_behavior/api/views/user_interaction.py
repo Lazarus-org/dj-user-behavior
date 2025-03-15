@@ -1,38 +1,18 @@
-# tracker/views.py
-from rest_framework import viewsets, mixins
-from user_behavior.models import UserSession, PageView, UserInteraction
-from user_behavior.api.serializers import (
-    UserSessionSerializer,
-    PageViewSerializer,
-    UserInteractionSerializer,
+from rest_framework import mixins
+
+from user_behavior.api.serializers.helper.get_serializer_cls import (
+    user_interaction_serializer_class,
 )
-
-
-class UserSessionViewSet(
-    mixins.CreateModelMixin,
-    mixins.RetrieveModelMixin,
-    mixins.ListModelMixin,
-    viewsets.GenericViewSet,
-):
-    queryset = UserSession.objects.all()
-    serializer_class = UserSessionSerializer
-
-
-class PageViewViewSet(
-    mixins.CreateModelMixin,
-    mixins.RetrieveModelMixin,
-    mixins.ListModelMixin,
-    viewsets.GenericViewSet,
-):
-    queryset = PageView.objects.select_related("session").all()
-    serializer_class = PageViewSerializer
+from user_behavior.api.views.base import BaseViewSet
+from user_behavior.models import UserInteraction
 
 
 class UserInteractionViewSet(
+    BaseViewSet,
     mixins.CreateModelMixin,
     mixins.RetrieveModelMixin,
     mixins.ListModelMixin,
-    viewsets.GenericViewSet,
 ):
+    config_prefix = "user_interaction"
     queryset = UserInteraction.objects.select_related("session").all()
-    serializer_class = UserInteractionSerializer
+    serializer_class = user_interaction_serializer_class()
