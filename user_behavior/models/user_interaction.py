@@ -1,49 +1,46 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
-from .user_session import UserSession
+from user_behavior.models.helper.enum.event_type import EventType
+
 
 class UserInteraction(models.Model):
-    EVENT_TYPES = [
-        ("click", _("Click")),
-        ("scroll", _("Scroll")),
-        ("mouse_move", _("Mouse Move")),
-        ("form_submit", _("Form Submit")),
-        ("input_change", _("Input Change")),
-        ("page_resize", _("Page Resize")),
-        ("keypress", _("Key Press")),
-        ("hover", _("Hover")),
-    ]
-
     session = models.ForeignKey(
-        UserSession,
+        to="UserSession",
         on_delete=models.CASCADE,
-        db_comment=_("The session associated with this interaction."),
-        help_text=_("The session during which this interaction occurred.")
+        verbose_name=_("User Session"),
+        db_comment="The user session associated with this interaction.",
+        help_text=_("The user session during which this interaction occurred."),
     )
     event_type = models.CharField(
+        verbose_name=_("Event Type"),
         max_length=50,
-        choices=EVENT_TYPES,
-        db_comment=_("Type of user interaction (e.g., click, scroll)."),
-        help_text=_("The type of interaction performed by the user.")
+        choices=EventType.choices,
+        db_comment="Type of user interaction (e.g., click, scroll).",
+        help_text=_("The type of interaction performed by the user."),
     )
     element = models.TextField(
-        db_comment=_("The HTML element interacted with."),
-        help_text=_("The ID, class, or tag name of the element the user interacted with.")
+        verbose_name=_("Element"),
+        db_comment="The HTML element interacted with.",
+        help_text=_(
+            "The ID, class, or tag name of the element the user interacted with."
+        ),
     )
     timestamp = models.DateTimeField(
+        verbose_name=_("Timestamp"),
         auto_now_add=True,
-        db_comment=_("Timestamp when the interaction occurred."),
-        help_text=_("The time when the interaction occurred.")
+        db_comment="Timestamp when the interaction occurred.",
+        help_text=_("The time when the interaction occurred."),
     )
     metadata = models.JSONField(
+        verbose_name=_("Metadata"),
         default=dict,
-        db_comment=_("Additional data about the interaction (e.g., coordinates)."),
-        help_text=_("Extra metadata like mouse coordinates, scroll position, etc.")
+        db_comment="Additional data about the interaction (e.g., coordinates).",
+        help_text=_("Extra metadata like mouse coordinates, scroll position, etc."),
+        blank=True,
     )
 
     class Meta:
-        db_table = "user_interactions"
         verbose_name = _("User Interaction")
         verbose_name_plural = _("User Interactions")
 
