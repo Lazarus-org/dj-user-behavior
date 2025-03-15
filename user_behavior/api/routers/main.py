@@ -1,7 +1,10 @@
-# tracker/urls.py
-from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from user_behavior.api.views.api import UserSessionViewSet, PageViewViewSet, UserInteractionViewSet
+
+from user_behavior.api.views import (
+    PageViewViewSet,
+    UserInteractionViewSet,
+    UserSessionViewSet,
+)
 
 router = DefaultRouter()
 router.register(r"sessions", UserSessionViewSet)
