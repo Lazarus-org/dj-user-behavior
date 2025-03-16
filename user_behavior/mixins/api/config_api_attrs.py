@@ -1,21 +1,21 @@
-from typing import List, Optional, Type, Dict, Any, Union
+from typing import Any, Dict, List, Optional, Type, Union
 
 from rest_framework.pagination import BasePagination
 from rest_framework.parsers import BaseParser
-from rest_framework.permissions import BasePermission, AllowAny
+from rest_framework.permissions import BasePermission, IsAuthenticated
 from rest_framework.throttling import BaseThrottle
 
 from user_behavior.settings.conf import config
 
 
 class ConfigureAttrsMixin:
-    """
-    A mixin for dynamically configuring API attributes based on settings.
+    """A mixin for dynamically configuring API attributes based on settings.
     Supports both global defaults and viewset-specific configurations.
 
     Attributes:
         config_prefix (str): Prefix for config attributes specific to this viewset
         default_config (Dict[str, Any]): Default configuration values
+
     """
 
     # Prefix for viewset-specific config attributes (to be overridden in subclass)
@@ -26,7 +26,7 @@ class ConfigureAttrsMixin:
         "ordering_fields": None,
         "search_fields": None,
         "parser_classes": [],
-        "permission_classes": [AllowAny],
+        "permission_classes": [IsAuthenticated],
         "filterset_class": None,
         "pagination_class": None,
         "throttle_classes": [],
@@ -34,9 +34,11 @@ class ConfigureAttrsMixin:
     }
 
     def configure_attrs(self) -> None:
-        """
-        Configures API attributes dynamically based on settings from config.
-        Uses viewset-specific settings when available, falling back to global defaults.
+        """Configures API attributes dynamically based on settings from config.
+
+        Uses viewset-specific settings when available, falling back to
+        global defaults.
+
         """
         # Get viewset-specific config attribute names
         specific_ordering = (
@@ -152,14 +154,14 @@ class ConfigureAttrsMixin:
         self,
         throttle_setting: Union[Type[BaseThrottle], List[Type[BaseThrottle]], None],
     ) -> List[Type[BaseThrottle]]:
-        """
-        Normalizes throttle settings into a list of throttle classes.
+        """Normalizes throttle settings into a list of throttle classes.
 
         Args:
             throttle_setting: Can be a single throttle class, a list of throttle classes, or None.
 
         Returns:
             A list of throttle classes.
+
         """
         if throttle_setting is None:
             return self.default_config["throttle_classes"]
