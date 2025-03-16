@@ -22,6 +22,10 @@ Designed for scalability and performance, `dj-user-behavior` empowers developers
 - Framework: Django >= 4.2
 - Django REST Framework: >= 3.14
 
+> **Note: Version Compatibility**
+>
+> For `Django >= 5.1`, use Django Rest Framework `3.15+`
+
 ## Documentation Overview
 
 The documentation is organized into the following sections:

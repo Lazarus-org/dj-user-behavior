@@ -5,11 +5,11 @@ from django.utils.module_loading import import_string
 
 from user_behavior.constants.default_settings import (
     admin_settings,
-    api_settings,
-    throttle_settings,
     api_page_view_settings,
-    api_user_session_settings,
+    api_settings,
     api_user_interaction_settings,
+    api_user_session_settings,
+    throttle_settings,
 )
 from user_behavior.constants.types import DefaultPath, OptionalPaths
 
@@ -89,9 +89,11 @@ class UserBehaviorConfig:
             f"{self.prefix}API_PAGE_VIEW_PAGINATION_CLASS",
             api_settings.pagination_class,
         )
-        self.api_page_view_extra_permission_class: OptionalPaths = self.get_optional_paths(
-            f"{self.prefix}API_PAGE_VIEW_EXTRA_PERMISSION_CLASS",
-            api_settings.extra_permission_class,
+        self.api_page_view_extra_permission_class: OptionalPaths = (
+            self.get_optional_paths(
+                f"{self.prefix}API_PAGE_VIEW_EXTRA_PERMISSION_CLASS",
+                api_settings.extra_permission_class,
+            )
         )
         self.api_page_view_parser_classes: OptionalPaths = self.get_optional_paths(
             f"{self.prefix}API_PAGE_VIEW_PARSER_CLASSES",
@@ -123,9 +125,11 @@ class UserBehaviorConfig:
             f"{self.prefix}API_USER_SESSION_PAGINATION_CLASS",
             api_settings.pagination_class,
         )
-        self.api_user_session_extra_permission_class: OptionalPaths = self.get_optional_paths(
-            f"{self.prefix}API_USER_SESSION_EXTRA_PERMISSION_CLASS",
-            api_settings.extra_permission_class,
+        self.api_user_session_extra_permission_class: OptionalPaths = (
+            self.get_optional_paths(
+                f"{self.prefix}API_USER_SESSION_EXTRA_PERMISSION_CLASS",
+                api_settings.extra_permission_class,
+            )
         )
         self.api_user_session_parser_classes: OptionalPaths = self.get_optional_paths(
             f"{self.prefix}API_USER_SESSION_PARSER_CLASSES",
@@ -137,9 +141,11 @@ class UserBehaviorConfig:
         )
 
         # UserInteraction-specific API settings
-        self.api_user_interaction_serializer_class: OptionalPaths = self.get_optional_paths(
-            f"{self.prefix}API_USER_INTERACTION_SERIALIZER_CLASS",
-            api_user_interaction_settings.user_interaction_serializer,
+        self.api_user_interaction_serializer_class: OptionalPaths = (
+            self.get_optional_paths(
+                f"{self.prefix}API_USER_INTERACTION_SERIALIZER_CLASS",
+                api_user_interaction_settings.user_interaction_serializer,
+            )
         )
         self.api_user_interaction_ordering_fields: List[str] = self.get_setting(
             f"{self.prefix}API_USER_INTERACTION_ORDERING_FIELDS",
@@ -149,25 +155,35 @@ class UserBehaviorConfig:
             f"{self.prefix}API_USER_INTERACTION_SEARCH_FIELDS",
             api_user_interaction_settings.search_fields,
         )
-        self.api_user_interaction_throttle_classes: OptionalPaths = self.get_optional_paths(
-            f"{self.prefix}API_USER_INTERACTION_THROTTLE_CLASSES",
-            throttle_settings.throttle_class,
+        self.api_user_interaction_throttle_classes: OptionalPaths = (
+            self.get_optional_paths(
+                f"{self.prefix}API_USER_INTERACTION_THROTTLE_CLASSES",
+                throttle_settings.throttle_class,
+            )
         )
-        self.api_user_interaction_pagination_class: OptionalPaths = self.get_optional_paths(
-            f"{self.prefix}API_USER_INTERACTION_PAGINATION_CLASS",
-            api_settings.pagination_class,
+        self.api_user_interaction_pagination_class: OptionalPaths = (
+            self.get_optional_paths(
+                f"{self.prefix}API_USER_INTERACTION_PAGINATION_CLASS",
+                api_settings.pagination_class,
+            )
         )
-        self.api_user_interaction_extra_permission_class: OptionalPaths = self.get_optional_paths(
-            f"{self.prefix}API_USER_INTERACTION_EXTRA_PERMISSION_CLASS",
-            api_settings.extra_permission_class,
+        self.api_user_interaction_extra_permission_class: OptionalPaths = (
+            self.get_optional_paths(
+                f"{self.prefix}API_USER_INTERACTION_EXTRA_PERMISSION_CLASS",
+                api_settings.extra_permission_class,
+            )
         )
-        self.api_user_interaction_parser_classes: OptionalPaths = self.get_optional_paths(
-            f"{self.prefix}API_USER_INTERACTION_PARSER_CLASSES",
-            api_settings.parser_classes,
+        self.api_user_interaction_parser_classes: OptionalPaths = (
+            self.get_optional_paths(
+                f"{self.prefix}API_USER_INTERACTION_PARSER_CLASSES",
+                api_settings.parser_classes,
+            )
         )
-        self.api_user_interaction_filterset_class: OptionalPaths = self.get_optional_paths(
-            f"{self.prefix}API_USER_INTERACTION_FILTERSET_CLASS",
-            api_user_interaction_settings.filterset_class,
+        self.api_user_interaction_filterset_class: OptionalPaths = (
+            self.get_optional_paths(
+                f"{self.prefix}API_USER_INTERACTION_FILTERSET_CLASS",
+                api_user_interaction_settings.filterset_class,
+            )
         )
 
     def get_setting(self, setting_name: str, default_value: Any) -> Any:

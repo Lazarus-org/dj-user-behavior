@@ -1,13 +1,16 @@
-from django_filters import rest_framework as filters
 from django.utils.translation import gettext_lazy as _
+from django_filters import rest_framework as filters
+
 from user_behavior.models import UserSession
 
 
 class UserSessionFilter(filters.FilterSet):
     """FilterSet for the UserSession model API.
 
-    Provides rich filtering capabilities for UserSession instances, including filters
-    for session ID, user agent, IP address, start/end times, and user ID.
+    Provides rich filtering capabilities for UserSession instances,
+    including filters for session ID, user agent, IP address, start/end
+    times, and user ID.
+
     """
 
     # Session ID filters

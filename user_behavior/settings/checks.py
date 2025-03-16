@@ -31,6 +31,7 @@ def check_user_behavior_settings(app_configs: Any, **kwargs: Any) -> List[Error]
     --------
     List[Error]
         A list of `Error` objects for any detected configuration issues.
+
     """
     errors: List[Error] = []
 
