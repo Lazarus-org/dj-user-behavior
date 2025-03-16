@@ -1,5 +1,5 @@
 import sys
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 import pytest
 from django.contrib.auth.models import User
@@ -320,14 +320,19 @@ class TestUserInteractionViewSet:
             len(response.data["results"]) == 1
         ), f"Expected 1 result with y_coord=200, got {len(response.data['results'])}"
 
-        # Test filtering with non-matching value
-        response = api_client.get(url, {"metadata": "x_coord=²"})
-        assert (
-            response.status_code == 200
-        ), f"Expected 200 OK, got {response.status_code}."
-        assert (
-            len(response.data["results"]) == 0
-        ), f"Expected 0 results with x_coord=², got {len(response.data['results'])}"
+        # Test filtering with mocked ValueError
+        with patch("user_behavior.api.filters.user_interaction.int") as mock_int:
+            # Configure mocks to raise ValueError for any input
+            mock_int.side_effect = ValueError("Mocked int conversion failure")
+
+            # Use a numeric-looking value that would normally convert, but force ValueError
+            response = api_client.get(url, {"metadata": "x_coord=100"})
+            assert (
+                response.status_code == 200
+            ), f"Expected 200 OK, got {response.status_code}."
+            assert (
+                len(response.data["results"]) == 0
+            ), f"Expected 0 results with mocked ValueError for x_coord=100, got {len(response.data['results'])}"
 
         # Test invalid metadata format (no '=')
         response = api_client.get(url, {"metadata": "x_coord"})
