@@ -1,5 +1,6 @@
-from django_filters import rest_framework as filters
 from django.utils.translation import gettext_lazy as _
+from django_filters import rest_framework as filters
+
 from user_behavior.models import UserInteraction, UserSession
 from user_behavior.models.helper.enum.event_type import EventType
 
@@ -7,8 +8,10 @@ from user_behavior.models.helper.enum.event_type import EventType
 class UserInteractionFilter(filters.FilterSet):
     """FilterSet for the UserInteraction model API.
 
-    Provides rich filtering capabilities for UserInteraction instances, including filters
-    for session, event type, element, timestamp, and metadata.
+    Provides rich filtering capabilities for UserInteraction instances,
+    including filters for session, event type, element, timestamp, and
+    metadata.
+
     """
 
     # Session-related filters
@@ -108,6 +111,7 @@ class UserInteractionFilter(filters.FilterSet):
 
         Allows filtering by key-value pairs in the metadata field.
         Example: 'x_coord=100' filters for interactions where metadata['x_coord'] = 100.
+
         """
         if "=" not in value:
             return queryset

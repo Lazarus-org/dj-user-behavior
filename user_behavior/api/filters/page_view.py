@@ -1,14 +1,17 @@
-from django_filters import rest_framework as filters
 from django.utils.translation import gettext_lazy as _
+from django_filters import rest_framework as filters
+
 from user_behavior.models import PageView
 
 
 class PageViewFilter(filters.FilterSet):
     """FilterSet for the PageView model API.
 
-    Provides rich filtering capabilities for PageView instances, including filters
-    for session, URL, and timestamp fields.
+    Provides rich filtering capabilities for PageView instances,
+    including filters for session, URL, and timestamp fields.
+
     """
+
     # Session-related filters
     session_id = filters.CharFilter(
         field_name="session__id",
@@ -42,13 +45,17 @@ class PageViewFilter(filters.FilterSet):
         field_name="url",
         lookup_expr="istartswith",
         label=_("URL Starts With"),
-        help_text=_("Filter by URL starting with the specified value (case-insensitive)."),
+        help_text=_(
+            "Filter by URL starting with the specified value (case-insensitive)."
+        ),
     )
     url_endswith = filters.CharFilter(
         field_name="url",
         lookup_expr="iendswith",
         label=_("URL Ends With"),
-        help_text=_("Filter by URL ending with the specified value (case-insensitive)."),
+        help_text=_(
+            "Filter by URL ending with the specified value (case-insensitive)."
+        ),
     )
 
     # Timestamp-related filters

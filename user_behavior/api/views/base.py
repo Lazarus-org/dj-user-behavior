@@ -1,6 +1,8 @@
-from typing import List, Type, Optional
-from rest_framework import viewsets, filters
+from typing import List, Optional, Type
+
+from rest_framework import filters, viewsets
 from rest_framework.serializers import Serializer
+
 from user_behavior.mixins.api.config_api_attrs import ConfigureAttrsMixin
 from user_behavior.mixins.api.control_api_methods import ControlAPIMethodsMixin
 from user_behavior.settings.conf import config
@@ -14,10 +16,8 @@ except ImportError:  # pragma: no cover
 
 
 class BaseViewSet(viewsets.GenericViewSet, ConfigureAttrsMixin, ControlAPIMethodsMixin):
-    """
-    A base viewset class that provides common functionality for filtering,
-    ordering, and method control with initialization configuration.
-    """
+    """A base viewset class that provides common functionality for filtering,
+    ordering, and method control with initialization configuration."""
 
     # Default filter backends
     filter_backends: List = [
@@ -54,18 +54,20 @@ class BaseViewSet(viewsets.GenericViewSet, ConfigureAttrsMixin, ControlAPIMethod
                 self.disable_methods([method])
 
     def get_queryset(self):
-        """
-        Get the queryset for the viewset.
+        """Get the queryset for the viewset.
+
         Can be overridden in subclasses for custom queryset logic.
+
         """
         if self.queryset is None:
             raise AssertionError("queryset must be defined in the subclass")
         return self.queryset
 
     def get_serializer_class(self):
-        """
-        Get the serializer class for the viewset.
+        """Get the serializer class for the viewset.
+
         Can be overridden in subclasses for custom serializer logic.
+
         """
         if self.serializer_class is None:
             raise AssertionError("serializer_class must be defined in the subclass")

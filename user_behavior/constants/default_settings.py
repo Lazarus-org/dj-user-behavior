@@ -61,9 +61,7 @@ class DefaultAPISettings:
     allow_retrieve: bool = True
     allow_create: bool = True
     extra_permission_class: Optional[str] = None
-    pagination_class: str = (
-        "user_behavior.api.paginations.DefaultLimitOffSetPagination"
-    )
+    pagination_class: str = "user_behavior.api.paginations.DefaultLimitOffSetPagination"
     parser_classes: List[str] = field(
         default_factory=lambda: [
             "rest_framework.parsers.JSONParser",
