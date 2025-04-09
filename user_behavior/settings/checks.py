@@ -267,4 +267,11 @@ def check_user_behavior_settings(app_configs: Any, **kwargs: Any) -> List[Error]
         )
     )
 
+    errors.extend(
+        validate_optional_path_setting(
+            config.get_setting(f"{config.prefix}REPORT_VIEW_PERMISSION_CLASS", None),
+            f"{config.prefix}REPORT_VIEW_PERMISSION_CLASS",
+        )
+    )
+
     return errors

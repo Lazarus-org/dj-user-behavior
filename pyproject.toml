@@ -143,6 +143,7 @@ disable = [
   "R0901", # Too many ancestors
   "R0913", # Too many arguments
   "R0911", # Too many return statements
+  "R0914", # Too many local variables
 ]
 max-line-length = 88
 max-positional-arguments = 10
