@@ -12,4 +12,6 @@ from user_behavior.tests.fixtures import (
     mock_request,
     api_client,
     log_capture,
+    report_url,
+    another_user_session,
 )

@@ -10,3 +10,9 @@ def api_client() -> APIClient:
     :return: An instance of APIClient to make HTTP requests in tests.
     """
     return APIClient()
+
+
+@pytest.fixture
+def report_url():
+    """Fixture to provide the URL for the view."""
+    return "/api_keys/"
