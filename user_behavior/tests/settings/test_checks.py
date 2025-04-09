@@ -240,8 +240,8 @@ class TestUserBehaviorSettings:
 
         errors = check_user_behavior_settings(None)
         assert (
-            len(errors) == 19
-        ), f"Expected 19 errors for invalid paths, but got {len(errors)}"
+            len(errors) == 20
+        ), f"Expected 20 errors for invalid paths, but got {len(errors)}"
         error_ids = [error.id for error in errors]
         expected_ids = [
             f"user_behavior.E010_{mock_config.prefix}ADMIN_SITE_CLASS",
@@ -263,6 +263,7 @@ class TestUserBehaviorSettings:
             f"user_behavior.E010_{mock_config.prefix}API_USER_INTERACTION_EXTRA_PERMISSION_CLASS",
             f"user_behavior.E011_{mock_config.prefix}API_USER_INTERACTION_PARSER_CLASSES",
             f"user_behavior.E010_{mock_config.prefix}API_USER_INTERACTION_FILTERSET_CLASS",
+            f"user_behavior.E010_{mock_config.prefix}REPORT_VIEW_PERMISSION_CLASS",
         ]
         assert all(
             eid in error_ids for eid in expected_ids

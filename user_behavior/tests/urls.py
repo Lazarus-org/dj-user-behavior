@@ -3,5 +3,5 @@ from django.urls import include, path
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path('user_behavior/', include("user_behavior.api.routers.main")),
+    path('user_behavior/', include("user_behavior.urls")),
 ]
