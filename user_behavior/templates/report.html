@@ -1,0 +1,785 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User behavior</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Abyssinica+SIL&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/report.css' %}">
+    <style>
+        
+    </style>
+</head>
+<body>
+
+    <nav class="navigationBar">
+        <div>
+            <img class="lazarus" src="{% static 'images/lazarus.png' %}" alt="lazarus_img">
+            <h3>
+                LAZARUS
+            </h3>
+        </div>
+        <button id="themeToggle">
+            <img width="30" height="30" src="https://img.icons8.com/ios-glyphs/30/moon-symbol.png" alt="moon-symbol"/>
+        </button>
+    </nav>
+
+    <div class="hello_card">
+        <div>
+            <span>
+                <h1>Welcome, </h1>
+                <h1 id="admin-data" data-admin="{{ admin_name }}">{{ admin_name }}</h1>
+            </span>
+            <p>
+                Track, analyze, and manage all user actions from the last 7 days in this dashboard.
+            </p>
+        </div>
+        <img src="{% static 'images/stream.png' %}" alt="image">
+    </div>
+
+    <h1 class="title">
+        User interaction
+    </h1>
+
+    <div class="interaction_card">
+        <div>
+            <div>
+                <h1>
+                    Interactions in last 7 days
+                </h1>
+            </div>
+            <svg class="interactionData" width="900" height="400"></svg>
+            <div class="tooltipUserInteraction"></div>
+        </div>
+        <div>
+            <div>
+                <h1>
+                    Interactions
+                </h1>
+            </div>
+            <svg class="timeStampsData" width="900" height="400"></svg>
+            <div class="tooltip"></div>
+        </div>
+    </div>
+
+    <h1 class="title">
+        Page view
+    </h1>
+
+    <div class="pageView_card">
+        <div class="url_content">
+            <input type="text" placeholder="Please enter the URL you want..." aria-label="Search" id="urlInput">
+            <img width="40" height="40" src="https://img.icons8.com/fluency-systems-regular/100/search--v1.png" alt="search--v1"/>
+        </div>
+        <div id="urlModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <div id="urlList">
+                </div>
+            </div>
+        </div>
+        <div class="timeStartChart">
+            <div>
+                <h1>
+                    Views per day
+                </h1>
+            </div>
+            <svg class="startTimesData" width="900" height="400"></svg>
+            <div class="tooltip"></div>
+        </div>
+    </div>
+
+    <h1 class="title">
+        User session
+    </h1>
+
+    <div class="session_card">
+        <div>
+            <div>
+                <h1>
+                    User agent
+                </h1>
+            </div>
+            <svg class="browserData" width="650" height="440" style="padding: 10px;"></svg>
+            <div class="tooltip"></div>
+        </div>
+        <div>
+            <div>
+                <h1>
+                    Browser info
+                </h1>
+            </div>
+            <svg class="startEndTimesData" width="950" height="400"></svg>
+            <div class="tooltip"></div>
+        </div>
+       
+    </div>
+
+
+
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://unpkg.com/topojson-client@3"></script>
+    <script>
+
+        const admin = document.getElementById('admin-data').dataset.admin;
+
+
+        const themeToggle = document.getElementById("themeToggle");
+        const themeIcon = themeToggle.querySelector("img");
+        let isDarkMode = true;
+        function toggleTheme() {
+            if (isDarkMode) {
+                document.body.classList.remove("dark-mode");
+                document.body.classList.add("light-mode");
+                themeIcon.src = "https://img.icons8.com/ios-glyphs/30/sun--v1.png";
+                themeIcon.alt = "sun-symbol";
+            } else {
+                document.body.classList.remove("light-mode");
+                document.body.classList.add("dark-mode");
+                themeIcon.src = "https://img.icons8.com/ios-glyphs/30/moon-symbol.png";
+                themeIcon.alt = "moon-symbol";
+            }
+            isDarkMode = !isDarkMode;
+        }
+        themeToggle.addEventListener("click", toggleTheme);
+        document.body.classList.add("dark-mode");
+
+
+
+        const interactionData = JSON.parse('{{ interaction_data|escapejs }}');
+
+        const defaultEventTypes = [
+            'click',
+            'scroll',
+            'mouse_move',
+            'form_submit',
+            'input_change',
+            'page_resize',
+            'key_press',
+            'hover'
+        ];
+
+        const chartData = defaultEventTypes.map(eventType => {
+            const found = interactionData.find(d => d.interaction.toLowerCase() === eventType.toLowerCase());
+            return {
+                interaction: eventType,
+                count: found ? found.count : 0
+            };
+        });
+
+        const interactionSvg = d3.select(".interactionData");
+        const marginInteraction = { top: 20, right: 30, bottom: 70, left: 40 };
+        const widthInteraction = +interactionSvg.attr("width") - marginInteraction.left - marginInteraction.right;
+        const heightInteraction = +interactionSvg.attr("height") - marginInteraction.top - marginInteraction.bottom;
+
+        const gInteraction = interactionSvg
+            .append("g")
+            .attr("transform", `translate(${marginInteraction.left},${marginInteraction.top})`);
+
+        const x = d3.scaleBand()
+            .domain(defaultEventTypes)
+            .range([0, widthInteraction])
+            .padding(0.3);
+
+        const maxCountInteraction = d3.max(chartData, d => d.count);
+        const y = d3.scaleLinear()
+            .domain([0, maxCountInteraction + 1])
+            .range([heightInteraction, 0]);
+
+        gInteraction.append("g")
+            .attr("class", "axis axis--y")
+            .call(
+                d3.axisLeft(y)
+                    .tickValues([...d3.range(0, maxCountInteraction + 1), maxCountInteraction + 1])
+                    .tickFormat(d => (d <= maxCountInteraction ? d : ""))
+            )
+            .selectAll(".tick line")
+            .attr("stroke-opacity", 0.5);
+
+        gInteraction.append("g")
+            .attr("class", "axis axis--x")
+            .attr("transform", `translate(0,${heightInteraction})`)
+            .call(d3.axisBottom(x))
+            .selectAll("text")
+            .style("text-anchor", "end")
+            .attr("dx", "-.8em")
+            .attr("dy", ".15em")
+            .attr("transform", "rotate(-45)");
+
+        const filteredData = chartData.filter(d => d.count > 0);
+
+        gInteraction.selectAll(".bar")
+            .data(filteredData)
+            .enter().append("rect")
+            .attr("class", "bar")
+            .attr("x", d => x(d.interaction))
+            .attr("y", d => y(d.count))
+            .attr("width", x.bandwidth())
+            .attr("height", d => heightInteraction - y(d.count))
+            .attr("rx", 5)
+            .attr("ry", 5)
+            .attr("fill", (d, i) => d3.schemeCategory10[i % 10])
+            .on("mouseover", function (event, d) {
+                d3.select(".tooltip")
+                    .style("opacity", 1)
+                    .html(`${d.interaction}: ${d.count}`)
+                    .style("left", (event.pageX + 5) + "px")
+                    .style("top", (event.pageY - 28) + "px");
+            })
+            .on("mouseout", function () {
+                d3.select(".tooltip").style("opacity", 0);
+            });
+
+
+        const timeStampsData = JSON.parse('{{ timestamps_data|escapejs }}');
+        const timeStampsSVG = d3.select(".timeStampsData");
+        const marginTimeStamps = { top: 20, right: 30, bottom: 60, left: 40 };
+        const widthTimeStamps = +timeStampsSVG.attr("width") - marginTimeStamps.left - marginTimeStamps.right;
+        const heightTimeStamps = +timeStampsSVG.attr("height") - marginTimeStamps.top - marginTimeStamps.bottom;
+
+        const gTimeStamps = timeStampsSVG.append("g").attr("transform", `translate(${marginTimeStamps.left},${marginTimeStamps.top})`);
+
+        const today = new Date();
+        const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+        const last7Days = [];
+        for (let i = 6; i >= 0; i--) {
+            const date = new Date(today);
+            date.setDate(date.getDate() - i);
+            last7Days.push({
+                date: date,
+                dayName: dayNames[date.getDay()],
+                dateString: date.toISOString().split('T')[0]
+            });
+        }
+
+        const dayCounts = {};
+        last7Days.forEach(day => {
+            dayCounts[day.dateString] = 0;
+        });
+
+        timeStampsData.forEach(d => {
+            const recordDate = new Date(d.timestamp).toISOString().split('T')[0];
+            if (dayCounts.hasOwnProperty(recordDate)) {
+                dayCounts[recordDate] += d.count || 0;
+            }
+        });
+
+        const dayData = last7Days.map(day => ({
+            date: day.dateString,
+            dayName: day.dayName,
+            count: dayCounts[day.dateString] || 0
+        }));
+
+
+        const xTimeStamps = d3.scaleBand()
+            .domain(dayData.map(d => d.dayName))
+            .range([0, widthTimeStamps])
+            .padding(0.3);
+
+        const maxCount = d3.max(dayData, d => d.count);
+        const yTimeStamps = d3.scaleLinear()
+            .domain([0, maxCount + (maxCount > 0 ? 1 : 0)])
+            .nice()
+            .range([heightTimeStamps, 0]);
+
+        gTimeStamps.append("g")
+            .selectAll(".bar")
+            .data(dayData)
+            .enter().append("rect")
+            .attr("class", "bar")
+            .attr("x", d => xTimeStamps(d.dayName))
+            .attr("y", d => yTimeStamps(d.count))
+            .attr("width", xTimeStamps.bandwidth())
+            .attr("height", d => heightTimeStamps - yTimeStamps(d.count))
+            .attr("rx", 5)
+            .attr("ry", 5)
+            .on("mouseover", function(event, d) {
+                d3.select(".tooltip")
+                    .style("opacity", 1)
+                    .html(`${d.dayName}<br>date: ${d.date}<br>count: ${d.count}`)
+                    .style("left", (event.pageX + 5) + "px")
+                    .style("top", (event.pageY - 28) + "px");
+            })
+            .on("mouseout", function() {
+                d3.select(".tooltip").style("opacity", 0);
+            });
+
+        gTimeStamps.append("g")
+            .attr("class", "axis axis--x")
+            .attr("transform", `translate(0,${heightTimeStamps})`)
+            .call(d3.axisBottom(xTimeStamps))
+            .selectAll("text")
+            .style("text-anchor", "end")
+            .style("font-size", "10px")
+            .attr("dx", "-0.5em")
+            .attr("dy", "0.5em")
+            .attr("transform", "rotate(-45)");
+            
+        gTimeStamps.append("g")
+            .attr("class", "axis axis--y")
+            .call(d3.axisLeft(yTimeStamps)
+            .tickValues(d3.range(0, maxCount + 1))
+            .tickFormat(d3.format("d")));
+
+        gTimeStamps.append("text")
+            .attr("x", widthTimeStamps / 2)
+            .attr("y", -5)
+            .attr("text-anchor", "middle")
+            .style("font-size", "12px")
+
+
+
+        const pageViewsData = JSON.parse('{{ page_views|escapejs }}');
+        const urlInput = document.getElementById('urlInput');
+        const urlModal = document.getElementById('urlModal');
+        const urlList = document.getElementById('urlList');
+        const closeModal = document.querySelector('.close');
+
+        let allUrls = extractUrls();
+
+        function extractUrls() {
+            const urls = [];
+            pageViewsData.forEach(item => {
+                if (item.urls) {
+                    item.urls.forEach(urlObj => {
+                        urls.push(urlObj.url);
+                    });
+                }
+            });
+            return urls;
+        }
+
+        function showUrls() {
+            urlList.innerHTML = '';
+            allUrls.forEach(url => {
+                const urlItem = document.createElement('div');
+                urlItem.textContent = url;
+                urlItem.style.padding = '5px';
+                urlItem.style.cursor = 'pointer';
+                urlItem.style.color = '#110423';
+                urlItem.addEventListener('click', () => {
+                    urlInput.value = url;
+                    urlModal.style.display = 'none';
+                });
+                urlList.appendChild(urlItem);
+            });
+            urlModal.style.display = 'block';
+        }
+
+        function filterUrls() {
+            const searchTerm = urlInput.value.toLowerCase();
+            urlList.innerHTML = '';
+            const filteredUrls = allUrls.filter(url => url.toLowerCase().includes(searchTerm));
+            
+            filteredUrls.forEach(url => {
+                const urlItem = document.createElement('div');
+                urlItem.textContent = url;
+                urlItem.style.padding = '5px';
+                urlItem.style.cursor = 'pointer';
+                urlItem.style.color = '#110423';
+                urlItem.addEventListener('click', () => {
+                    urlInput.value = url;
+                    urlModal.style.display = 'none';
+                });
+                urlList.appendChild(urlItem);
+            });
+        }
+
+        urlInput.addEventListener('focus', showUrls);
+        urlInput.addEventListener('input', filterUrls);
+
+        closeModal.addEventListener('click', () => {
+            urlModal.style.display = 'none';
+        });
+
+        window.addEventListener('click', (event) => {
+            if (event.target === urlModal) {
+                urlModal.style.display = 'none';
+            }
+        });
+
+
+
+        const startTimesData = JSON.parse('{{ page_views|escapejs }}');
+        const startTimesSVG = d3.select(".startTimesData");
+        const marginStartTimes = { top: 20, right: 30, bottom: 60, left: 40 };
+        const widthStartTimes = +startTimesSVG.attr("width") - marginStartTimes.left - marginStartTimes.right;
+        const heightStartTimes = +startTimesSVG.attr("height") - marginStartTimes.top - marginStartTimes.bottom;
+
+        const gStartTimes = startTimesSVG.append("g").attr("transform", `translate(${marginStartTimes.left},${marginStartTimes.top})`);
+
+        const todayPageView = new Date();
+        const dayNamesPageView = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+        const last7DaysPageView = [];
+        for (let i = 6; i >= 0; i--) {
+            const date = new Date(todayPageView);
+            date.setDate(date.getDate() - i);
+            last7DaysPageView.push({
+                date: date,
+                dayName: dayNamesPageView[date.getDay()],
+                dateString: date.toISOString().split('T')[0]
+            });
+        }
+
+        const dayCountsPageView = {};
+        last7DaysPageView.forEach(day => {
+            dayCountsPageView[day.dateString] = 0;
+        });
+
+        startTimesData.forEach(d => {
+            const recordDate = new Date(d.timestamp).toISOString().split('T')[0];
+            if (dayCountsPageView.hasOwnProperty(recordDate)) {
+                dayCountsPageView[recordDate] += d.count || 0;
+            }
+        });
+
+        const dayDataStartTimes = last7DaysPageView.map(day => ({
+            date: day.dateString,
+            dayName: day.dayName,
+            count: dayCountsPageView[day.dateString] || 0
+        }));
+
+
+        const xStartTimes = d3.scaleBand()
+            .domain(dayDataStartTimes.map(d => d.dayName))
+            .range([0, widthStartTimes])
+            .padding(0.3);
+
+        const maxCountPageView = d3.max(dayDataStartTimes, d => d.count);
+        const yStartTimes = d3.scaleLinear()
+            .domain([0, maxCountPageView + (maxCountPageView > 0 ? 1 : 0)])
+            .nice()
+            .range([heightStartTimes, 0]);
+
+        gStartTimes.append("g")
+            .selectAll(".bar")
+            .data(dayDataStartTimes)
+            .enter().append("rect")
+            .attr("class", "bar")
+            .attr("x", d => xStartTimes(d.dayName))
+            .attr("y", d => yStartTimes(d.count))
+            .attr("width", xStartTimes.bandwidth())
+            .attr("height", d => heightStartTimes - yStartTimes(d.count))
+            .attr("rx", 5)
+            .attr("ry", 5)
+            .on("mouseover", function(event, d) {
+                d3.select(".tooltip")
+                    .style("opacity", 1)
+                    .html(`${d.dayName}<br>date: ${d.date}<br>count: ${d.count}`)
+                    .style("left", (event.pageX + 5) + "px")
+                    .style("top", (event.pageY - 28) + "px");
+            })
+            .on("mouseout", function() {
+                d3.select(".tooltip").style("opacity", 0);
+            });
+
+        gStartTimes.append("g")
+            .attr("class", "axis axis--x")
+            .attr("transform", `translate(0,${heightStartTimes})`)
+            .call(d3.axisBottom(xStartTimes))
+            .selectAll("text")
+            .style("text-anchor", "end")
+            .style("font-size", "10px")
+            .attr("dx", "-0.5em")
+            .attr("dy", "0.5em")
+            .attr("transform", "rotate(-45)");
+            
+        gStartTimes.append("g")
+            .attr("class", "axis axis--y")
+            .call(d3.axisLeft(yStartTimes)
+            .tickValues(d3.range(0, maxCountPageView + 1))
+            .tickFormat(d3.format("d")));
+
+        gStartTimes.append("text")
+            .attr("x", widthStartTimes / 2)
+            .attr("y", -5)
+            .attr("text-anchor", "middle")
+            .style("font-size", "12px")
+
+
+
+        const browserData = JSON.parse('{{ browser_data|escapejs }}');
+        console.log(browserData)
+        const container = d3.select(".browserData").classed("pie-container", true);
+        const width = 650;
+        const height = 450;
+        const radius = Math.min(width, height) / 2 - 50;
+
+        const svg = container.append("svg")
+            .attr("width", width)
+            .attr("height", height)
+            .attr("viewBox", `0 0 ${width} ${height}`)
+            .style("background", "#f9f9f9")
+            .style("border-radius", "8px");
+
+        const chartGroup = svg.append("g")
+            .attr("transform", `translate(${width / 2}, ${height / 2})`);
+
+        const color = d3.scaleOrdinal()
+            .domain(browserData.map(d => d.browser))
+            .range(d3.schemeTableau10);
+
+        const pie = d3.pie()
+            .value(d => d.count)
+            .sort(null)
+            .padAngle(0.03);
+
+        const arc = d3.arc()
+            .innerRadius(radius * 0.5)
+            .outerRadius(radius)
+            .cornerRadius(4);
+
+        const outerArc = d3.arc()
+            .innerRadius(radius * 0.7)
+            .outerRadius(radius * 0.7);
+
+        const arcs = chartGroup.selectAll(".arc")
+            .data(pie(browserData))
+            .enter().append("g")
+            .attr("class", "arc");
+
+        arcs.append("path")
+            .attr("d", arc)
+            .attr("fill", d => color(d.data.browser))
+            .attr("stroke", "#fff")
+            .attr("stroke-width", 2)
+            .attr("opacity", 0)
+            .transition()
+            .duration(800)
+            .delay((d, i) => i * 100)
+            .attr("opacity", 1)
+            .attrTween("d", function(d) {
+                const interpolate = d3.interpolate({
+                    startAngle: 0,
+                    endAngle: 0
+                }, d);
+                return function(t) {
+                    return arc(interpolate(t));
+                };
+            });
+
+        arcs.select("path")
+            .on("mouseover", function(event, d) {
+                d3.select(this)
+                    .transition()
+                    .duration(200)
+                    .attr("transform", "scale(1.05)")
+                    .attr("stroke-width", 3)
+                    .attr("filter", "url(#drop-shadow)");
+
+                d3.select(".pie-tooltip")
+                    .transition()
+                    .duration(200)
+                    .style("opacity", 1)
+                    .html(`
+                        <div class="tooltip-header">${d.data.browser}</div>
+                        <div class="tooltip-content">
+                            <span>Usage:</span> ${d.data.count} visits<br>
+                            <span>Percentage:</span> ${d.data.percentage}%
+                        </div>
+                    `)
+                    .style("left", (event.pageX + 15) + "px")
+                    .style("top", (event.pageY - 28) + "px");
+            })
+            .on("mouseout", function() {
+                d3.select(this)
+                    .transition()
+                    .duration(200)
+                    .attr("transform", "scale(1)")
+                    .attr("stroke-width", 2)
+                    .attr("filter", "none");
+
+                d3.select(".pie-tooltip")
+                    .transition()
+                    .duration(200)
+                    .style("opacity", 0);
+            });
+
+        const labelGroups = arcs.append("g")
+            .attr("class", "label-group")
+            .attr("opacity", 0)
+            .transition()
+            .delay(1000)
+            .duration(500)
+            .attr("opacity", 1);
+
+        labelGroups.each(function() {
+            const group = d3.select(this);
+            
+            group.append("path")
+                .attr("class", "label-line")
+                .attr("d", d => {
+                    const pos = outerArc.centroid(d);
+                    pos[0] = radius * 1.05 * (d.startAngle + d.endAngle < Math.PI ? 1 : -1);
+                    return `M${arc.centroid(d)}L${outerArc.centroid(d)}L${pos}`;
+                })
+                .attr("stroke", "#999")
+                .attr("stroke-width", 0.5)
+                .attr("fill", "none");
+
+            group.append("text")
+                .attr("class", "label-text")
+                .attr("dy", "0.35em")
+                .attr("text-anchor", d => d.startAngle + d.endAngle < Math.PI ? "start" : "end")
+                .text(d => `${d.data.browser} (${d.data.percentage}%)`)
+                .attr("transform", d => {
+                    const pos = outerArc.centroid(d);
+                    pos[0] = radius * 1.1 * (d.startAngle + d.endAngle < Math.PI ? 1 : -1);
+                    return `translate(${pos})`;
+                })
+                .style("font-size", "12px")
+                .style("fill", "#FBF8FF");
+        });
+
+        svg.append("filter")
+            .attr("id", "drop-shadow")
+            .attr("height", "130%")
+            .append("feGaussianBlur")
+            .attr("in", "SourceAlpha")
+            .attr("stdDeviation", 3)
+            .attr("result", "blur");
+
+        svg.select("filter")
+            .append("feOffset")
+            .attr("in", "blur")
+            .attr("dx", 1)
+            .attr("dy", 1)
+            .attr("result", "offsetBlur");
+
+        const feMerge = svg.select("filter")
+            .append("feMerge");
+
+        feMerge.append("feMergeNode")
+            .attr("in", "offsetBlur");
+        feMerge.append("feMergeNode")
+            .attr("in", "SourceGraphic");
+
+        svg.append("text")
+            .attr("x", width / 2)
+            .attr("y", 30)
+            .attr("text-anchor", "middle")
+            .style("font-size", "18px")
+            .style("font-weight", "600")
+            .style("fill", "#FBF8FF");
+
+        chartGroup.append("text")
+            .attr("text-anchor", "middle")
+            .attr("dy", "0.35em")
+            .text("Total: " + d3.sum(browserData, d => d.count))
+            .style("font-size", "24px")
+            .style("font-weight", "bold")
+            .style("fill", "#FBF8FF");
+
+
+
+        const startEndTimesData = JSON.parse('{{ start_end_times_data|escapejs }}');
+        const dayDurationSums = {};
+        startEndTimesData.forEach(d => {
+            const day = d.day;
+            const duration = parseInt(d.duration) || 0;
+            
+            if (duration > 0) {
+                if (!dayDurationSums[day]) {
+                    dayDurationSums[day] = 0;
+                }
+                dayDurationSums[day] += duration;
+            }
+        });
+
+        const todayStartEndTimes = new Date();
+        const dayNamesStartEndTimes = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+        const last7DaysStartEndTimes = [];
+
+        for (let i = 6; i >= 0; i--) {
+            const date = new Date(todayStartEndTimes);
+            date.setDate(date.getDate() - i);
+            const dayName = dayNamesStartEndTimes[date.getDay()];
+            last7DaysStartEndTimes.push({
+                dayName,
+                dateString: date.toISOString().split('T')[0]
+            });
+        }
+
+        const dayDataStartEndTimes = last7DaysStartEndTimes.map(day => {
+            const totalDuration = dayDurationSums[day.dayName] || 0;
+            const hours = Math.floor(totalDuration / 60);
+            const minutes = totalDuration % 60;
+            return {
+                dayName: day.dayName,
+                date: day.dateString,
+                duration: totalDuration,
+                durationFormatted: `${hours}h ${minutes}m`
+            };
+        });
+
+        const startEndTimesSVG = d3.select(".startEndTimesData");
+        const marginStartEndTimes = { top: 40, right: 30, bottom: 80, left: 60 };
+        const widthStartEndTimes = +startEndTimesSVG.attr("width") - marginStartEndTimes.left - marginStartEndTimes.right;
+        const heightStartEndTimes = +startEndTimesSVG.attr("height") - marginStartEndTimes.top - marginStartEndTimes.bottom;
+
+        const gStartEndTimes = startEndTimesSVG.append("g")
+            .attr("transform", `translate(${marginStartEndTimes.left},${marginStartEndTimes.top})`);
+
+        const xStartEndTimes = d3.scaleBand()
+            .domain(dayDataStartEndTimes.map(d => d.dayName))
+            .range([0, widthStartEndTimes])
+            .padding(0.4);
+
+        const maxDuration = d3.max(dayDataStartEndTimes, d => d.duration);
+        const yStartEndTimes = d3.scaleLinear()
+            .domain([0, maxDuration])
+            .nice()
+            .range([heightStartEndTimes, 0]);
+
+        gStartEndTimes.selectAll(".bar")
+            .data(dayDataStartEndTimes)
+            .enter().append("rect")
+            .attr("class", "bar")
+            .attr("x", d => xStartEndTimes(d.dayName))
+            .attr("y", d => yStartEndTimes(d.duration))
+            .attr("width", xStartEndTimes.bandwidth())
+            .attr("height", d => heightStartEndTimes - yStartEndTimes(d.duration))
+            .attr("rx", 5)
+            .attr("ry", 5)
+            .on("mouseover", function(event, d) {
+                d3.select(this).attr("opacity", 0.8);
+                d3.select(".tooltip")
+                    .style("opacity", 1)
+                    .html(`${d.dayName}<br>Date: ${d.date}<br>Duration: ${d.durationFormatted}`)
+                    .style("left", (event.pageX + 5) + "px")
+                    .style("top", (event.pageY - 28) + "px");
+            })
+            .on("mouseout", function() {
+                d3.select(this).attr("opacity", 1);
+                d3.select(".tooltip").style("opacity", 0);
+            });
+
+        gStartEndTimes.append("g")
+            .attr("class", "axis axis--x")
+            .attr("transform", `translate(0,${heightStartEndTimes})`)
+            .call(d3.axisBottom(xStartEndTimes))
+            .selectAll("text")
+            .style("text-anchor", "end")
+            .attr("dx", "-.8em")
+            .attr("dy", ".15em")
+            .attr("transform", "rotate(-45)");
+
+        gStartEndTimes.append("g")
+            .attr("class", "axis axis--y")
+            .call(d3.axisLeft(yStartEndTimes));
+
+        gStartEndTimes.append("text")
+            .attr("x", widthStartEndTimes / 2)
+            .attr("y", -10)
+            .attr("text-anchor", "middle")
+            .style("font-size", "14px")
+
+    </script>
+
+</body>
+</html>
