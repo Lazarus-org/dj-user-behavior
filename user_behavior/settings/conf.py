@@ -10,6 +10,7 @@ from user_behavior.constants.default_settings import (
     api_user_interaction_settings,
     api_user_session_settings,
     throttle_settings,
+    view_settings,
 )
 from user_behavior.constants.types import DefaultPath, OptionalPaths
 
@@ -184,6 +185,12 @@ class UserBehaviorConfig:
                 f"{self.prefix}API_USER_INTERACTION_FILTERSET_CLASS",
                 api_user_interaction_settings.filterset_class,
             )
+        )
+
+        # Report View settings
+        self.report_view_permission_class: OptionalPaths = self.get_optional_paths(
+            f"{self.prefix}REPORT_VIEW_PERMISSION_CLASS",
+            view_settings.report_permission_class,
         )
 
     def get_setting(self, setting_name: str, default_value: Any) -> Any:

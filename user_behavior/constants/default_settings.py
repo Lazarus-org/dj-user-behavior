@@ -71,9 +71,15 @@ class DefaultAPISettings:
     )
 
 
+@dataclass(frozen=True)
+class DefaultViewSettings:
+    report_permission_class: Optional[str] = "rest_framework.permissions.IsAdminUser"
+
+
 admin_settings = DefaultAdminSettings()
 throttle_settings = DefaultThrottleSettings()
 api_settings = DefaultAPISettings()
 api_page_view_settings = DefaultPageViewAPISettings()
 api_user_session_settings = DefaultUserSessionAPISettings()
 api_user_interaction_settings = DefaultUserInteractionAPISettings()
+view_settings = DefaultViewSettings()
