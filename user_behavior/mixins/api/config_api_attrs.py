@@ -2,7 +2,7 @@ from typing import Any, Dict, List, Optional, Type, Union
 
 from rest_framework.pagination import BasePagination
 from rest_framework.parsers import BaseParser
-from rest_framework.permissions import BasePermission, IsAuthenticated
+from rest_framework.permissions import AllowAny, BasePermission
 from rest_framework.throttling import BaseThrottle
 
 from user_behavior.settings.conf import config
@@ -26,7 +26,7 @@ class ConfigureAttrsMixin:
         "ordering_fields": None,
         "search_fields": None,
         "parser_classes": [],
-        "permission_classes": [IsAuthenticated],
+        "permission_classes": [AllowAny],
         "filterset_class": None,
         "pagination_class": None,
         "throttle_classes": [],
