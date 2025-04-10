@@ -3,14 +3,14 @@ from typing import Tuple
 
 
 def detect_browser(user_agent: str) -> Tuple[str, str]:
-    """
-    Detects the browser name and version from the User-Agent string.
+    """Detects the browser name and version from the User-Agent string.
 
     Args:
         user_agent (str): The user agent string to parse.
 
     Returns:
         Tuple[str, str]: A tuple containing the browser name and version.
+
     """
     browsers = [
         ("Edge", r"Edg/([\d.]+)"),
