@@ -154,8 +154,6 @@ urlpatterns = [
 
 # API Guide
 
-# Django User Behavior API Guide
-
 ## Overview
 
 The `dj-user-behavior` package provides APIs for tracking and analyzing user behavior within your application. The API exposes three main endpoints:
@@ -346,8 +344,8 @@ controls the number of results returned per page.
 
 ## Permissions
 
-The base permission for all endpoints is ``IsAuthenticated``, meaning users must be logged in to access the API. You can
-extend this by passing an extra permission class like ``IsAdminUser`` or creating custom permission classes to implement more specific access control.
+The base permission for all endpoints is ``AllowAny``, meaning all anonymous or authenticated users can access the API. You can
+extend this by passing an extra permission class like ``IsAuthenticated`` or creating custom permission classes to implement more specific access control.
 
 
 ---
@@ -585,6 +583,39 @@ The detailed view organizes fields into collapsible sections:
 
 ----
 
+Below is the documentation for the `UserBehaviorReportView` in Markdown format, styled similarly to the `APIKeyListView` example you provided:
+
+---
+
+# User Behavior Report View
+
+## Overview
+The `UserBehaviorReportView` provides a detailed analytics dashboard displaying user behavior metrics over the last seven days. This class-based view aggregates data from `UserInteraction`, `PageView`, and `UserSession` models, rendering it in a visually appealing template (`report.html`) with charts and tables for administrators or authorized users.
+
+## Access Control
+- Access is restricted based on permissions defined in the `USER_BEHAVIOR_REPORT_VIEW_PERMISSION_CLASS` setting. The default is typically set to `IsAdminUser`, but this can be customized.
+- The view leverages Django REST Framework (DRF)-style permission classes, requiring each class to implement a `has_permission(request, view)` method that returns a boolean indicating whether access is granted.
+- If any permission check fails (e.g., `has_permission` is missing or returns `False`), a `PermissionDenied` exception is raised, resulting in a 403 Forbidden response.
+
+## Features
+- **Event Type Counts**: Displays total counts of user interaction events (e.g., clicks, scrolls) across the last seven days.
+- **Daily Interaction Counts**: Shows the number of interactions per day, labeled with day names (e.g., "Monday").
+- **Page Views with URL Breakdown**: Presents daily page view totals with a breakdown of counts per URL, offering insights into page popularity.
+- **Session Durations**: Provides average session durations (in hours) and total session counts per day, reflecting user engagement.
+- **Browser Usage**: Calculates browser usage percentages over the last seven days, identifying dominant browsers (e.g., Chrome, Firefox).
+- **Modern UI**: Rendered in the `report.html` template, designed for integration with D3.js charts and responsive layouts.
+
+## Usage
+1. Navigate to the user behavior report URL in your application (e.g., `/report/`).
+2. Ensure you meet the permission requirements specified in `USER_BEHAVIOR_REPORT_VIEW_PERMISSION_CLASS` (e.g., be logged in as an admin if `IsAdminUser` is used).
+3. View the analytics dashboard, featuring:
+   - A summary of interaction event counts.
+   - Daily interaction and page view charts.
+   - Session duration and count tables.
+   - A browser usage breakdown with percentages.
+
+---
+
 # Settings
 
 This section outlines the available settings for configuring the `dj-user-behavior` package. You can customize these
@@ -660,6 +691,9 @@ USER_BEHAVIOR_API_USER_INTERACTION_PARSER_CLASSES = [
     "rest_framework.parsers.FormParser",
 ]
 USER_BEHAVIOR_API_USER_INTERACTION_FILTERSET_CLASS = None
+
+# Report View settings
+USER_BEHAVIOR_REPORT_VIEW_PERMISSION_CLASS = "rest_framework.permissions.IsAdminUser"
 ```
 
 # Settings Overview
@@ -916,6 +950,18 @@ This section provides a detailed explanation of the available settings in the `d
 **Default**: `None`
 
 **Description**: Defines the filter class for user interaction API responses.
+
+---
+
+## Report Template View Settings
+
+### `USER_BEHAVIOR_REPORT_VIEW_PERMISSION_CLASS`
+
+**Type**: `Optional[str]`
+
+**Default**: `"rest_framework.permissions.IsAdminUser"`
+
+**Description**: Specifies the DRF permission class for the `UserBehaviorReportView`. Customize this to change access requirements for the report view.
 
 ---
 
