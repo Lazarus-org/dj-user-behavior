@@ -1,9 +1,10 @@
 from django.urls import path
 from rest_framework.routers import DefaultRouter
+
 from user_behavior.api.views import (
-    UserSessionViewSet,
     PageViewViewSet,
     UserInteractionViewSet,
+    UserSessionViewSet,
 )
 from user_behavior.views import UserBehaviorReportView
 

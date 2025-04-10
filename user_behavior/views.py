@@ -146,16 +146,16 @@ class UserBehaviorReportView(TemplateView):
         start_end_times_data = []
         for count_item, duration_item in zip(daily_counts, daily_durations):
             if count_item["day"] == duration_item["day"]:
-                avg_duration_hours = (
+                avg_duration_minutes = (
                     int(duration_item["avg_duration"].total_seconds() / 60)
                     if duration_item["avg_duration"]
-                    and duration_item["avg_duration"] > 0
+                    and duration_item["avg_duration"].total_seconds() > 0
                     else 0
                 )
                 start_end_times_data.append(
                     {
                         "day": count_item["day"].strftime("%A"),
-                        "duration": f"{avg_duration_hours}",
+                        "duration": f"{avg_duration_minutes}",
                         "count": count_item["count"],
                         "timestamp": count_item["day"].isoformat(),
                     }

@@ -112,7 +112,7 @@
             <svg class="startEndTimesData" width="950" height="400"></svg>
             <div class="tooltip"></div>
         </div>
-       
+
     </div>
 
 
@@ -432,7 +432,7 @@
             const searchTerm = urlInput.value.toLowerCase();
             urlList.innerHTML = '';
             const filteredUrls = allUrls.filter(url => url.toLowerCase().includes(searchTerm));
-            
+
             filteredUrls.forEach(url => {
                 const urlItem = document.createElement('div');
                 urlItem.textContent = url;
