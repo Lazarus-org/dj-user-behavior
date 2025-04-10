@@ -499,9 +499,7 @@
             .style("font-size", "12px")
 
 
-
         const browserData = JSON.parse('{{ browser_data|escapejs }}');
-        console.log(browserData)
         const container = d3.select(".browserData").classed("pie-container", true);
         const width = 650;
         const height = 450;
@@ -550,18 +548,15 @@
             .duration(800)
             .delay((d, i) => i * 100)
             .attr("opacity", 1)
-            .attrTween("d", function(d) {
-                const interpolate = d3.interpolate({
-                    startAngle: 0,
-                    endAngle: 0
-                }, d);
-                return function(t) {
+            .attrTween("d", function (d) {
+                const interpolate = d3.interpolate({ startAngle: 0, endAngle: 0 }, d);
+                return function (t) {
                     return arc(interpolate(t));
                 };
             });
 
         arcs.select("path")
-            .on("mouseover", function(event, d) {
+            .on("mouseover", function (event, d) {
                 d3.select(this)
                     .transition()
                     .duration(200)
@@ -583,7 +578,7 @@
                     .style("left", (event.pageX + 15) + "px")
                     .style("top", (event.pageY - 28) + "px");
             })
-            .on("mouseout", function() {
+            .on("mouseout", function () {
                 d3.select(this)
                     .transition()
                     .duration(200)
@@ -597,41 +592,51 @@
                     .style("opacity", 0);
             });
 
-        const labelGroups = arcs.append("g")
-            .attr("class", "label-group")
-            .attr("opacity", 0)
-            .transition()
-            .delay(1000)
-            .duration(500)
-            .attr("opacity", 1);
-
-        labelGroups.each(function() {
-            const group = d3.select(this);
-            
-            group.append("path")
-                .attr("class", "label-line")
-                .attr("d", d => {
-                    const pos = outerArc.centroid(d);
-                    pos[0] = radius * 1.05 * (d.startAngle + d.endAngle < Math.PI ? 1 : -1);
-                    return `M${arc.centroid(d)}L${outerArc.centroid(d)}L${pos}`;
-                })
-                .attr("stroke", "#999")
-                .attr("stroke-width", 0.5)
-                .attr("fill", "none");
-
-            group.append("text")
-                .attr("class", "label-text")
-                .attr("dy", "0.35em")
-                .attr("text-anchor", d => d.startAngle + d.endAngle < Math.PI ? "start" : "end")
-                .text(d => `${d.data.browser} (${d.data.percentage}%)`)
-                .attr("transform", d => {
-                    const pos = outerArc.centroid(d);
-                    pos[0] = radius * 1.1 * (d.startAngle + d.endAngle < Math.PI ? 1 : -1);
-                    return `translate(${pos})`;
-                })
-                .style("font-size", "12px")
-                .style("fill", "#FBF8FF");
+        const labelData = pie(browserData).map(d => {
+            const pos = outerArc.centroid(d);
+            pos[0] = radius * 1.2 * (d.startAngle + d.endAngle < Math.PI ? 1 : -1);
+            return {
+                ...d,
+                x: pos[0],
+                y: pos[1],
+                textAnchor: d.startAngle + d.endAngle < Math.PI ? "start" : "end"
+            };
         });
+
+        const simulation = d3.forceSimulation(labelData)
+            .force("y", d3.forceY(d => d.y).strength(0.1))
+            .force("x", d3.forceX(d => d.x).strength(0.1))
+            .force("collision", d3.forceCollide(14))
+            .stop();
+
+        for (let i = 0; i < 120; ++i) simulation.tick();
+
+        const labels = chartGroup.selectAll(".label-group")
+            .data(labelData)
+            .enter()
+            .append("g")
+            .attr("class", "label-group");
+
+        labels.append("path")
+            .attr("class", "label-line")
+            .attr("d", d => {
+                const posA = arc.centroid(d);
+                const posB = outerArc.centroid(d);
+                const posC = [d.x, d.y];
+                return `M${posA}L${posB}L${posC}`;
+            })
+            .attr("stroke", "#999")
+            .attr("stroke-width", 0.5)
+            .attr("fill", "none");
+
+        labels.append("text")
+            .attr("class", "label-text")
+            .attr("dy", "0.35em")
+            .attr("text-anchor", d => d.textAnchor)
+            .text(d => `${d.data.browser} (${d.data.percentage}%)`)
+            .attr("transform", d => `translate(${d.x}, ${d.y})`)
+            .style("font-size", "12px")
+            .style("fill", "#FBF8FF");
 
         svg.append("filter")
             .attr("id", "drop-shadow")
@@ -655,14 +660,6 @@
             .attr("in", "offsetBlur");
         feMerge.append("feMergeNode")
             .attr("in", "SourceGraphic");
-
-        svg.append("text")
-            .attr("x", width / 2)
-            .attr("y", 30)
-            .attr("text-anchor", "middle")
-            .style("font-size", "18px")
-            .style("font-weight", "600")
-            .style("fill", "#FBF8FF");
 
         chartGroup.append("text")
             .attr("text-anchor", "middle")
