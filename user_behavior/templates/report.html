@@ -10,7 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Abyssinica+SIL&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'css/report.css' %}">
     <style>
-        
+
     </style>
 </head>
 <body>
@@ -115,7 +115,7 @@
             <svg class="startEndTimesData" width="950" height="400"></svg>
             <div class="tooltip"></div>
         </div>
-       
+
     </div>
 
 
@@ -318,7 +318,7 @@
             .attr("dx", "-0.5em")
             .attr("dy", "0.5em")
             .attr("transform", "rotate(-45)");
-            
+
         gTimeStamps.append("g")
             .attr("class", "axis axis--y")
             .call(d3.axisLeft(yTimeStamps)
@@ -374,7 +374,7 @@
             const searchTerm = urlInput.value.toLowerCase();
             urlList.innerHTML = '';
             const filteredUrls = allUrls.filter(url => url.toLowerCase().includes(searchTerm));
-            
+
             filteredUrls.forEach(url => {
                 const urlItem = document.createElement('div');
                 urlItem.textContent = url;
@@ -488,7 +488,7 @@
             .attr("dx", "-0.5em")
             .attr("dy", "0.5em")
             .attr("transform", "rotate(-45)");
-            
+
         gStartTimes.append("g")
             .attr("class", "axis axis--y")
             .call(d3.axisLeft(yStartTimes)
@@ -610,7 +610,7 @@
 
         labelGroups.each(function() {
             const group = d3.select(this);
-            
+
             group.append("path")
                 .attr("class", "label-line")
                 .attr("d", d => {
@@ -682,7 +682,7 @@
         startEndTimesData.forEach(d => {
             const day = d.day;
             const duration = parseInt(d.duration) || 0;
-            
+
             if (duration > 0) {
                 if (!dayDurationSums[day]) {
                     dayDurationSums[day] = 0;

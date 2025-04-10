@@ -126,7 +126,7 @@ body.light-mode .title {
     flex-direction: row;
     justify-content: space-between;
 }
-.interaction_card  div  h1 , .session_card  div  h1 , 
+.interaction_card  div  h1 , .session_card  div  h1 ,
 .pageView_card  div  h1{
     font-weight: 500;
     font-size: 2.5rem;
