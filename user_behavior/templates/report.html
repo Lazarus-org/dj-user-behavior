@@ -675,19 +675,6 @@
 
 
         const startEndTimesData = JSON.parse('{{ start_end_times_data|escapejs }}');
-        const dayDurationSums = {};
-        startEndTimesData.forEach(d => {
-            const day = d.day;
-            const duration = parseInt(d.duration) || 0;
-            
-            if (duration > 0) {
-                if (!dayDurationSums[day]) {
-                    dayDurationSums[day] = 0;
-                }
-                dayDurationSums[day] += duration;
-            }
-        });
-
         const todayStartEndTimes = new Date();
         const dayNamesStartEndTimes = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
         const last7DaysStartEndTimes = [];
@@ -703,14 +690,15 @@
         }
 
         const dayDataStartEndTimes = last7DaysStartEndTimes.map(day => {
-            const totalDuration = dayDurationSums[day.dayName] || 0;
-            const hours = Math.floor(totalDuration / 60);
-            const minutes = totalDuration % 60;
+            const dayData = startEndTimesData.find(d => d.day === day.dayName) || { duration: 0 };
+            const durationMinutes = parseInt(dayData.duration) || 0;
+            const durationHours = durationMinutes / 60;
+            
             return {
                 dayName: day.dayName,
                 date: day.dateString,
-                duration: totalDuration,
-                durationFormatted: `${hours}h ${minutes}m`
+                duration: durationHours,
+                durationFormatted: `${Math.floor(durationHours)}h ${durationMinutes % 60}m`
             };
         });
 
@@ -727,9 +715,9 @@
             .range([0, widthStartEndTimes])
             .padding(0.4);
 
-        const maxDuration = d3.max(dayDataStartEndTimes, d => d.duration);
+        const maxDurationHours = d3.max(dayDataStartEndTimes, d => d.duration);
         const yStartEndTimes = d3.scaleLinear()
-            .domain([0, maxDuration])
+            .domain([0, maxDurationHours])
             .nice()
             .range([heightStartEndTimes, 0]);
 
@@ -768,13 +756,15 @@
 
         gStartEndTimes.append("g")
             .attr("class", "axis axis--y")
-            .call(d3.axisLeft(yStartEndTimes));
+            .call(d3.axisLeft(yStartEndTimes)
+                .tickFormat(d => d + "h")
+            );
 
         gStartEndTimes.append("text")
             .attr("x", widthStartEndTimes / 2)
             .attr("y", -10)
             .attr("text-anchor", "middle")
-            .style("font-size", "14px")
+            .style("font-size", "14px");
 
     </script>
 
