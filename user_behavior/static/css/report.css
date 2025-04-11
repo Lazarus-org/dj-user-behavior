@@ -15,20 +15,19 @@ body.dark-mode {
 .navigationBar {
     transition: background-color 0.5s ease;
 }
-body.dark-mode .navigationBar , body.light-mode .navigationBar {
+body.dark-mode .navigationBar, 
+body.light-mode .navigationBar {
     display: flex;
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
     background-color: #997DF8;
-    padding: 0.5% 7%;
+    padding: 8px 7%;
     box-shadow: 0px 0px 20px black;
 }
 .navigationBar > div {
     display: flex;
-    flex-direction: row;
     align-items: center;
-    justify-content: center;
     gap: 7px;
 }
 .lazarus {
@@ -44,113 +43,129 @@ body.dark-mode .navigationBar , body.light-mode .navigationBar {
     border: none;
     background: none;
     cursor: pointer;
+    padding: 8px;
 }
 .hello_card,
 .interaction_card,
-.pageView_card {
+.pageView_card,
+.session_card {
     transition: background-color 0.5s ease;
 }
 body.dark-mode .hello_card,
 body.dark-mode .interaction_card,
-body.dark-mode .pageView_card {
+body.dark-mode .pageView_card,
+body.dark-mode .session_card {
     background-color: #8b6ee9c7;
 }
 .hello_card {
     width: 90%;
-    height: 60vh;
+    min-height: 70vh;
     background-color: #8b6ee9c7;
     border-radius: 10px;
     box-shadow: 0px 0px 20px black;
-    margin: auto;
-    margin-top: 14vh;
-    margin-bottom: 14vh;
+    margin: 14vh auto;
     display: flex;
     flex-direction: row;
     justify-content: space-between;
+    flex-wrap: wrap;
 }
+
 .hello_card > div {
-    padding: 5rem;
+    padding: 3rem;
+    flex: 1;
+    min-width: 300px;
 }
+
 .hello_card div span {
     display: flex;
-    flex-direction: row;
     align-items: center;
     gap: 10px;
+    flex-wrap: wrap;
 }
+
 .hello_card h1 {
-    font-size: 3rem;
+    font-size: clamp(2rem, 5vw, 3rem);
 }
+
 .hello_card p {
-    font-size: 1.5rem;
-    width: 80%;
+    font-size: clamp(1rem, 2vw, 1.5rem);
+    width: 90%;
     margin-top: 5vh;
+    line-height: 1.6;
+    max-width: 78%;
 }
+
 .hello_card img {
     width: 30%;
-    height: 90%;
+    min-width: 250px;
+    height: auto;
     margin: auto;
     animation: floating 3s ease-in-out infinite;
+    will-change: transform;
 }
+
 @keyframes floating {
-    0% { transform: translateY(0px); }
-    50% { transform: translateY(-10px); }
-    100% { transform: translateY(0px); }
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-15px); }
 }
-body.dark-mode .title{
+.title {
     text-align: center;
-    font-size: 3rem;
+    font-size: clamp(2rem, 5vw, 3rem);
 }
 body.light-mode .title {
-    text-align: center;
-    font-size: 3rem;
     color: #110423;
 }
-.interaction_card , .pageView_card , .session_card {
+.interaction_card,
+.pageView_card,
+.session_card {
     width: 90%;
     background-color: #8b6ee9c7;
-    margin: auto;
-    margin-top: 15vh;
-    margin-bottom: 15vh;
+    margin: 10vh auto;
     border-radius: 10px;
     box-shadow: 0px 0px 20px black;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: space-between;
-    padding: 5rem;
-    gap: 10vh;
+    padding: 3rem;
+    gap: 5vh;
 }
-.interaction_card > div , .session_card > div {
+.timeStartChart {
+    display: flex;
+    flex-direction: column;
+}
+.interaction_card > div,
+.session_card > div {
     width: 100%;
     display: flex;
-    flex-direction: row;
-    justify-content: space-between;
+    flex-direction: column;
 }
-.interaction_card  div  h1 , .session_card  div  h1 ,
-.pageView_card  div  h1{
+.interaction_card div h1,
+.session_card div h1,
+.pageView_card div h1 {
     font-weight: 500;
-    font-size: 2.5rem;
-}
-.pageView_card > div {
-    width: 100%;
+    font-size: clamp(1.5rem, 3vw, 2.5rem);
+    margin-bottom: 2rem;
 }
 .url_content {
     display: flex;
-    flex-direction: row;
     align-items: center;
     width: 100%;
+    gap: 10px;
 }
 .url_content input {
-    width: 100% !important;
+    width: 100%;
     border: none;
-    padding: 15px !important;
-    border-radius: 9999px !important;
+    padding: 15px;
+    border-radius: 9999px;
     font-size: 16px;
     outline: none;
+    background-color: #503c91;
+    color: #FBF8FF;
 }
 .url_content img {
     cursor: pointer;
-    transition: transform 0.2s;
+    transition: transform 0.2s ease;
+    flex-shrink: 0;
 }
 .url_content img:hover {
     transform: scale(1.1);
@@ -158,63 +173,55 @@ body.light-mode .title {
 .modal {
     display: none;
     position: fixed;
-    z-index: 1;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    overflow: auto;
+    z-index: 100;
+    inset: 0;
     background-color: rgba(0, 0, 0, 0.5);
     transition: opacity 0.3s ease;
 }
 .modal-content {
     background-color: #eeeeee;
-    margin: 15% auto;
-    padding: 20px;
-    border: 1px solid #888;
-    width: 80%;
+    margin: 15vh auto;
+    padding: 50px 20px;
+    width: 90%;
+    max-width: 800px;
     border-radius: 10px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.423);
+    position: relative;
 }
 .close {
     color: #ff0000;
-    float: right;
+    position: absolute;
+    top: 10px;
+    right: 15px;
     font-size: 28px;
     font-weight: bold;
     transition: 0.3s ease;
-}
-.close:hover,
-.close:focus {
-    color: rgb(220, 218, 218);
-    text-decoration: none;
     cursor: pointer;
+}
+.close:hover {
+    color: #aaa;
 }
 #urlList {
-    max-height: 200px;
-    overflow-y: auto;
-}
-.pageView_card h3 {
-    padding: 5px 10px;
-    border-radius: 5px;
-    font-weight: 500;
-    background-color: #856add;
-    display: inline-block;
-}
-.timeStartChart {
     display: flex;
-    flex-direction: row;
-    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+svg.interactionData,
+svg.timeStampsData,
+svg.startTimesData,
+svg.browserData,
+svg.startEndTimesData {
+    width: auto;
+    height: auto;
+    max-width: 900px;
+    align-self: end;
 }
 .bar {
-    transition: fill 0.5s ease;
-}
-body.dark-mode .bar , body.light-mode .bar {
     fill: rgb(194, 10, 10);
-    transition: fill 0.3s;
+    transition: fill 0.3s ease;
     cursor: pointer;
-    width: 60px;
 }
-body.dark-mode .bar:hover , body.light-mode .bar:hover {
+.bar:hover {
     fill: #ffa500;
 }
 .axis--x path,
@@ -233,17 +240,4 @@ body.dark-mode .bar:hover , body.light-mode .bar:hover {
     border-radius: 8px;
     pointer-events: none;
     opacity: 0;
-}
-input[type="text"] {
-    padding: 10px;
-    font-size: 16px;
-    border: 1px solid #ccc;
-    background-color: #503c91;
-    margin: 2px;
-    transition: 0.3s ease-in-out;
-    border-radius: 5px;
-    width: 200px;
-}
-label {
-    font-size: 0.9rem;
 }

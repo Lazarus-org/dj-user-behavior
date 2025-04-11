@@ -9,9 +9,6 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Abyssinica+SIL&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'css/report.css' %}">
-    <style>
-
-    </style>
 </head>
 <body>
 
@@ -57,7 +54,7 @@
         <div>
             <div>
                 <h1>
-                    Interactions
+                    Daily Interactions
                 </h1>
             </div>
             <svg class="timeStampsData" width="900" height="400"></svg>
@@ -84,7 +81,7 @@
         <div class="timeStartChart">
             <div>
                 <h1>
-                    Views per day
+                    Daily Page Views
                 </h1>
             </div>
             <svg class="startTimesData" width="900" height="400"></svg>
@@ -100,7 +97,7 @@
         <div>
             <div>
                 <h1>
-                    User agent
+                    Browser Usage
                 </h1>
             </div>
             <svg class="browserData" width="650" height="440" style="padding: 10px;"></svg>
@@ -109,7 +106,7 @@
         <div>
             <div>
                 <h1>
-                    Browser info
+                    Daily Session Durations
                 </h1>
             </div>
             <svg class="startEndTimesData" width="950" height="400"></svg>
@@ -171,7 +168,7 @@
         });
 
         const interactionSvg = d3.select(".interactionData");
-        const marginInteraction = { top: 20, right: 30, bottom: 70, left: 40 };
+        const marginInteraction = { top: 20, right: 30, bottom: 70, left: 60 };
         const widthInteraction = +interactionSvg.attr("width") - marginInteraction.left - marginInteraction.right;
         const heightInteraction = +interactionSvg.attr("height") - marginInteraction.top - marginInteraction.bottom;
 
@@ -185,16 +182,48 @@
             .padding(0.3);
 
         const maxCountInteraction = d3.max(chartData, d => d.count);
+
+        function calculateYDomain(maxValue) {
+            if (maxValue === 0) return [0, 1];
+            
+            const exponent = Math.floor(Math.log10(maxValue));
+            const step = Math.pow(10, exponent);
+            const upperBound = Math.ceil(maxValue / step) * step;
+            
+            if (upperBound <= 10) {
+                return [0, upperBound];
+            }
+            
+            const niceSteps = [1, 2, 5, 10];
+            let selectedStep = step;
+            
+            for (const s of niceSteps) {
+                const currentStep = s * Math.pow(10, exponent - 1);
+                if (Math.ceil(maxValue / currentStep) <= 10) {
+                    selectedStep = currentStep;
+                    break;
+                }
+            }
+            
+            return [0, Math.ceil(maxValue / selectedStep) * selectedStep];
+        }
+
+        const yDomain = calculateYDomain(maxCountInteraction);
         const y = d3.scaleLinear()
-            .domain([0, maxCountInteraction + 1])
+            .domain(yDomain)
             .range([heightInteraction, 0]);
 
         gInteraction.append("g")
             .attr("class", "axis axis--y")
             .call(
                 d3.axisLeft(y)
-                    .tickValues([...d3.range(0, maxCountInteraction + 1), maxCountInteraction + 1])
-                    .tickFormat(d => (d <= maxCountInteraction ? d : ""))
+                    .ticks(5)
+                    .tickFormat(d => {
+                        if (yDomain[1] >= 1000) {
+                            return d3.format(".2s")(d).replace("G", "B");
+                        }
+                        return d;
+                    })
             )
             .selectAll(".tick line")
             .attr("stroke-opacity", 0.5);
@@ -225,7 +254,7 @@
             .on("mouseover", function (event, d) {
                 d3.select(".tooltip")
                     .style("opacity", 1)
-                    .html(`${d.interaction}: ${d.count}`)
+                    .html(`${d.interaction}: ${d.count.toLocaleString()}`)
                     .style("left", (event.pageX + 5) + "px")
                     .style("top", (event.pageY - 28) + "px");
             })
@@ -236,7 +265,7 @@
 
         const timeStampsData = JSON.parse('{{ timestamps_data|escapejs }}');
         const timeStampsSVG = d3.select(".timeStampsData");
-        const marginTimeStamps = { top: 20, right: 30, bottom: 60, left: 40 };
+        const marginTimeStamps = { top: 20, right: 30, bottom: 60, left: 60 };
         const widthTimeStamps = +timeStampsSVG.attr("width") - marginTimeStamps.left - marginTimeStamps.right;
         const heightTimeStamps = +timeStampsSVG.attr("height") - marginTimeStamps.top - marginTimeStamps.bottom;
 
@@ -245,21 +274,20 @@
         const today = new Date();
         const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
-        const last7Days = [];
-        for (let i = 6; i >= 0; i--) {
+        const last7Days = Array.from({ length: 7 }, (_, i) => {
             const date = new Date(today);
-            date.setDate(date.getDate() - i);
-            last7Days.push({
+            date.setDate(date.getDate() - (6 - i));
+            return {
                 date: date,
                 dayName: dayNames[date.getDay()],
                 dateString: date.toISOString().split('T')[0]
-            });
-        }
-
-        const dayCounts = {};
-        last7Days.forEach(day => {
-            dayCounts[day.dateString] = 0;
+            };
         });
+
+        const dayCounts = last7Days.reduce((acc, day) => {
+            acc[day.dateString] = 0;
+            return acc;
+        }, {});
 
         timeStampsData.forEach(d => {
             const recordDate = new Date(d.timestamp).toISOString().split('T')[0];
@@ -274,15 +302,39 @@
             count: dayCounts[day.dateString] || 0
         }));
 
-
         const xTimeStamps = d3.scaleBand()
             .domain(dayData.map(d => d.dayName))
             .range([0, widthTimeStamps])
             .padding(0.3);
 
         const maxCount = d3.max(dayData, d => d.count);
+
+        function calculateYDomain(maxValue) {
+            if (maxValue === 0) return [0, 1];
+            
+            const exponent = Math.floor(Math.log10(maxValue));
+            const step = Math.pow(10, exponent);
+            const upperBound = Math.ceil(maxValue / step) * step;
+            
+            if (upperBound <= 10) return [0, upperBound];
+            
+            const niceSteps = [1, 2, 5, 10];
+            let selectedStep = step;
+            
+            for (const s of niceSteps) {
+                const currentStep = s * Math.pow(10, exponent - 1);
+                if (Math.ceil(maxValue / currentStep) <= 10) {
+                    selectedStep = currentStep;
+                    break;
+                }
+            }
+            
+            return [0, Math.ceil(maxValue / selectedStep) * selectedStep];
+        }
+
+        const yDomainTimeStamps = calculateYDomain(maxCount);
         const yTimeStamps = d3.scaleLinear()
-            .domain([0, maxCount + (maxCount > 0 ? 1 : 0)])
+            .domain(yDomainTimeStamps)
             .nice()
             .range([heightTimeStamps, 0]);
 
@@ -300,7 +352,7 @@
             .on("mouseover", function(event, d) {
                 d3.select(".tooltip")
                     .style("opacity", 1)
-                    .html(`${d.dayName}<br>date: ${d.date}<br>count: ${d.count}`)
+                    .html(`${d.dayName}<br>Date: ${d.date}<br>Count: ${d.count.toLocaleString()}`)
                     .style("left", (event.pageX + 5) + "px")
                     .style("top", (event.pageY - 28) + "px");
             })
@@ -322,14 +374,20 @@
         gTimeStamps.append("g")
             .attr("class", "axis axis--y")
             .call(d3.axisLeft(yTimeStamps)
-            .tickValues(d3.range(0, maxCount + 1))
-            .tickFormat(d3.format("d")));
+                .ticks(5)
+                .tickFormat(d => {
+                    if (yDomain[1] >= 1000) {
+                        return d3.format(".2s")(d).replace("G", "B");
+                    }
+                    return d;
+                }))
+            .append("text")
+            .attr("transform", "rotate(-90)")
+            .attr("y", 6)
+            .attr("dy", "0.71em")
+            .attr("text-anchor", "end")
+            .text("Count");
 
-        gTimeStamps.append("text")
-            .attr("x", widthTimeStamps / 2)
-            .attr("y", -5)
-            .attr("text-anchor", "middle")
-            .style("font-size", "12px")
 
 
 
@@ -406,30 +464,30 @@
 
         const startTimesData = JSON.parse('{{ page_views|escapejs }}');
         const startTimesSVG = d3.select(".startTimesData");
-        const marginStartTimes = { top: 20, right: 30, bottom: 60, left: 40 };
+        const marginStartTimes = { top: 30, right: 30, bottom: 70, left: 60 };
         const widthStartTimes = +startTimesSVG.attr("width") - marginStartTimes.left - marginStartTimes.right;
         const heightStartTimes = +startTimesSVG.attr("height") - marginStartTimes.top - marginStartTimes.bottom;
 
         const gStartTimes = startTimesSVG.append("g").attr("transform", `translate(${marginStartTimes.left},${marginStartTimes.top})`);
 
-        const todayPageView = new Date();
-        const dayNamesPageView = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+                const todayPageView = new Date();
+                const dayNamesPageView = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
-        const last7DaysPageView = [];
-        for (let i = 6; i >= 0; i--) {
-            const date = new Date(todayPageView);
-            date.setDate(date.getDate() - i);
-            last7DaysPageView.push({
-                date: date,
-                dayName: dayNamesPageView[date.getDay()],
-                dateString: date.toISOString().split('T')[0]
-            });
-        }
+                const last7DaysPageView = [];
+                for (let i = 6; i >= 0; i--) {
+                    const date = new Date(todayPageView);
+                    date.setDate(date.getDate() - i);
+                    last7DaysPageView.push({
+                        date: date,
+                        dayName: dayNamesPageView[date.getDay()],
+                        dateString: date.toISOString().split('T')[0]
+                    });
+                }
 
-        const dayCountsPageView = {};
-        last7DaysPageView.forEach(day => {
-            dayCountsPageView[day.dateString] = 0;
-        });
+        const dayCountsPageView = last7DaysPageView.reduce((acc, day) => {
+            acc[day.dateString] = 0;
+            return acc;
+        }, {});
 
         startTimesData.forEach(d => {
             const recordDate = new Date(d.timestamp).toISOString().split('T')[0];
@@ -441,9 +499,9 @@
         const dayDataStartTimes = last7DaysPageView.map(day => ({
             date: day.dateString,
             dayName: day.dayName,
+            fullDayName: day.fullDayName,
             count: dayCountsPageView[day.dateString] || 0
         }));
-
 
         const xStartTimes = d3.scaleBand()
             .domain(dayDataStartTimes.map(d => d.dayName))
@@ -451,8 +509,9 @@
             .padding(0.3);
 
         const maxCountPageView = d3.max(dayDataStartTimes, d => d.count);
+        const yDomainStartTimes = calculateYDomain(maxCountPageView);
         const yStartTimes = d3.scaleLinear()
-            .domain([0, maxCountPageView + (maxCountPageView > 0 ? 1 : 0)])
+            .domain(yDomainStartTimes)
             .nice()
             .range([heightStartTimes, 0]);
 
@@ -470,7 +529,7 @@
             .on("mouseover", function(event, d) {
                 d3.select(".tooltip")
                     .style("opacity", 1)
-                    .html(`${d.dayName}<br>date: ${d.date}<br>count: ${d.count}`)
+                    .html(`${d.fullDayName}<br>Date: ${d.date}<br>Views: ${d.count.toLocaleString()}`)
                     .style("left", (event.pageX + 5) + "px")
                     .style("top", (event.pageY - 28) + "px");
             })
@@ -492,19 +551,17 @@
         gStartTimes.append("g")
             .attr("class", "axis axis--y")
             .call(d3.axisLeft(yStartTimes)
-            .tickValues(d3.range(0, maxCountPageView + 1))
-            .tickFormat(d3.format("d")));
-
-        gStartTimes.append("text")
-            .attr("x", widthStartTimes / 2)
-            .attr("y", -5)
-            .attr("text-anchor", "middle")
-            .style("font-size", "12px")
+                .ticks(5)
+                .tickFormat(d => {
+                    if (yDomain[1] >= 1000) {
+                        return d3.format(".2s")(d).replace("G", "B");
+                    }
+                    return d;
+                }));
 
 
 
         const browserData = JSON.parse('{{ browser_data|escapejs }}');
-        console.log(browserData)
         const container = d3.select(".browserData").classed("pie-container", true);
         const width = 650;
         const height = 450;
@@ -553,18 +610,15 @@
             .duration(800)
             .delay((d, i) => i * 100)
             .attr("opacity", 1)
-            .attrTween("d", function(d) {
-                const interpolate = d3.interpolate({
-                    startAngle: 0,
-                    endAngle: 0
-                }, d);
-                return function(t) {
+            .attrTween("d", function (d) {
+                const interpolate = d3.interpolate({ startAngle: 0, endAngle: 0 }, d);
+                return function (t) {
                     return arc(interpolate(t));
                 };
             });
 
         arcs.select("path")
-            .on("mouseover", function(event, d) {
+            .on("mouseover", function (event, d) {
                 d3.select(this)
                     .transition()
                     .duration(200)
@@ -586,7 +640,7 @@
                     .style("left", (event.pageX + 15) + "px")
                     .style("top", (event.pageY - 28) + "px");
             })
-            .on("mouseout", function() {
+            .on("mouseout", function () {
                 d3.select(this)
                     .transition()
                     .duration(200)
@@ -600,41 +654,51 @@
                     .style("opacity", 0);
             });
 
-        const labelGroups = arcs.append("g")
-            .attr("class", "label-group")
-            .attr("opacity", 0)
-            .transition()
-            .delay(1000)
-            .duration(500)
-            .attr("opacity", 1);
-
-        labelGroups.each(function() {
-            const group = d3.select(this);
-
-            group.append("path")
-                .attr("class", "label-line")
-                .attr("d", d => {
-                    const pos = outerArc.centroid(d);
-                    pos[0] = radius * 1.05 * (d.startAngle + d.endAngle < Math.PI ? 1 : -1);
-                    return `M${arc.centroid(d)}L${outerArc.centroid(d)}L${pos}`;
-                })
-                .attr("stroke", "#999")
-                .attr("stroke-width", 0.5)
-                .attr("fill", "none");
-
-            group.append("text")
-                .attr("class", "label-text")
-                .attr("dy", "0.35em")
-                .attr("text-anchor", d => d.startAngle + d.endAngle < Math.PI ? "start" : "end")
-                .text(d => `${d.data.browser} (${d.data.percentage}%)`)
-                .attr("transform", d => {
-                    const pos = outerArc.centroid(d);
-                    pos[0] = radius * 1.1 * (d.startAngle + d.endAngle < Math.PI ? 1 : -1);
-                    return `translate(${pos})`;
-                })
-                .style("font-size", "12px")
-                .style("fill", "#FBF8FF");
+        const labelData = pie(browserData).map(d => {
+            const pos = outerArc.centroid(d);
+            pos[0] = radius * 1.2 * (d.startAngle + d.endAngle < Math.PI ? 1 : -1);
+            return {
+                ...d,
+                x: pos[0],
+                y: pos[1],
+                textAnchor: d.startAngle + d.endAngle < Math.PI ? "start" : "end"
+            };
         });
+
+        const simulation = d3.forceSimulation(labelData)
+            .force("y", d3.forceY(d => d.y).strength(0.1))
+            .force("x", d3.forceX(d => d.x).strength(0.1))
+            .force("collision", d3.forceCollide(14))
+            .stop();
+
+        for (let i = 0; i < 120; ++i) simulation.tick();
+
+        const labels = chartGroup.selectAll(".label-group")
+            .data(labelData)
+            .enter()
+            .append("g")
+            .attr("class", "label-group");
+
+        labels.append("path")
+            .attr("class", "label-line")
+            .attr("d", d => {
+                const posA = arc.centroid(d);
+                const posB = outerArc.centroid(d);
+                const posC = [d.x, d.y];
+                return `M${posA}L${posB}L${posC}`;
+            })
+            .attr("stroke", "#999")
+            .attr("stroke-width", 0.5)
+            .attr("fill", "none");
+
+        labels.append("text")
+            .attr("class", "label-text")
+            .attr("dy", "0.35em")
+            .attr("text-anchor", d => d.textAnchor)
+            .text(d => `${d.data.browser} (${d.data.percentage}%)`)
+            .attr("transform", d => `translate(${d.x}, ${d.y})`)
+            .style("font-size", "12px")
+            .style("fill", "#FBF8FF");
 
         svg.append("filter")
             .attr("id", "drop-shadow")
@@ -659,14 +723,6 @@
         feMerge.append("feMergeNode")
             .attr("in", "SourceGraphic");
 
-        svg.append("text")
-            .attr("x", width / 2)
-            .attr("y", 30)
-            .attr("text-anchor", "middle")
-            .style("font-size", "18px")
-            .style("font-weight", "600")
-            .style("fill", "#FBF8FF");
-
         chartGroup.append("text")
             .attr("text-anchor", "middle")
             .attr("dy", "0.35em")
@@ -678,19 +734,6 @@
 
 
         const startEndTimesData = JSON.parse('{{ start_end_times_data|escapejs }}');
-        const dayDurationSums = {};
-        startEndTimesData.forEach(d => {
-            const day = d.day;
-            const duration = parseInt(d.duration) || 0;
-
-            if (duration > 0) {
-                if (!dayDurationSums[day]) {
-                    dayDurationSums[day] = 0;
-                }
-                dayDurationSums[day] += duration;
-            }
-        });
-
         const todayStartEndTimes = new Date();
         const dayNamesStartEndTimes = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
         const last7DaysStartEndTimes = [];
@@ -706,14 +749,15 @@
         }
 
         const dayDataStartEndTimes = last7DaysStartEndTimes.map(day => {
-            const totalDuration = dayDurationSums[day.dayName] || 0;
-            const hours = Math.floor(totalDuration / 60);
-            const minutes = totalDuration % 60;
+            const dayData = startEndTimesData.find(d => d.day === day.dayName) || { duration: 0 };
+            const durationMinutes = parseInt(dayData.duration) || 0;
+            const durationHours = durationMinutes / 60;
+            
             return {
                 dayName: day.dayName,
                 date: day.dateString,
-                duration: totalDuration,
-                durationFormatted: `${hours}h ${minutes}m`
+                duration: durationHours,
+                durationFormatted: `${Math.floor(durationHours)}h ${durationMinutes % 60}m`
             };
         });
 
@@ -730,9 +774,9 @@
             .range([0, widthStartEndTimes])
             .padding(0.4);
 
-        const maxDuration = d3.max(dayDataStartEndTimes, d => d.duration);
+        const maxDurationHours = d3.max(dayDataStartEndTimes, d => d.duration);
         const yStartEndTimes = d3.scaleLinear()
-            .domain([0, maxDuration])
+            .domain([0, maxDurationHours])
             .nice()
             .range([heightStartEndTimes, 0]);
 
@@ -771,13 +815,9 @@
 
         gStartEndTimes.append("g")
             .attr("class", "axis axis--y")
-            .call(d3.axisLeft(yStartEndTimes));
-
-        gStartEndTimes.append("text")
-            .attr("x", widthStartEndTimes / 2)
-            .attr("y", -10)
-            .attr("text-anchor", "middle")
-            .style("font-size", "14px")
+            .call(d3.axisLeft(yStartEndTimes)
+                .tickFormat(d => d + "h")
+            );
 
     </script>
 
