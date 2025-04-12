@@ -396,19 +396,23 @@
         const urlModal = document.getElementById('urlModal');
         const urlList = document.getElementById('urlList');
         const closeModal = document.querySelector('.close');
+        const startTimesSVG = d3.select(".startTimesData");
+        const marginStartTimes = { top: 30, right: 30, bottom: 70, left: 60 };
+        const widthStartTimes = +startTimesSVG.attr("width") - marginStartTimes.left - marginStartTimes.right;
+        const heightStartTimes = +startTimesSVG.attr("height") - marginStartTimes.top - marginStartTimes.bottom;
 
         let allUrls = extractUrls();
 
         function extractUrls() {
-            const urls = [];
+            const urls = new Set();
             pageViewsData.forEach(item => {
                 if (item.urls) {
                     item.urls.forEach(urlObj => {
-                        urls.push(urlObj.url);
+                        urls.add(urlObj.url);
                     });
                 }
             });
-            return urls;
+            return Array.from(urls);
         }
 
         function showUrls() {
@@ -422,6 +426,7 @@
                 urlItem.addEventListener('click', () => {
                     urlInput.value = url;
                     urlModal.style.display = 'none';
+                    updatePageViewsChart(url);
                 });
                 urlList.appendChild(urlItem);
             });
@@ -432,7 +437,6 @@
             const searchTerm = urlInput.value.toLowerCase();
             urlList.innerHTML = '';
             const filteredUrls = allUrls.filter(url => url.toLowerCase().includes(searchTerm));
-
             filteredUrls.forEach(url => {
                 const urlItem = document.createElement('div');
                 urlItem.textContent = url;
@@ -442,6 +446,7 @@
                 urlItem.addEventListener('click', () => {
                     urlInput.value = url;
                     urlModal.style.display = 'none';
+                    updatePageViewsChart(url);
                 });
                 urlList.appendChild(urlItem);
             });
@@ -449,6 +454,7 @@
 
         urlInput.addEventListener('focus', showUrls);
         urlInput.addEventListener('input', filterUrls);
+        urlInput.addEventListener('change', () => updatePageViewsChart(urlInput.value));
 
         closeModal.addEventListener('click', () => {
             urlModal.style.display = 'none';
@@ -460,105 +466,131 @@
             }
         });
 
-
-
-        const startTimesData = JSON.parse('{{ page_views|escapejs }}');
-        const startTimesSVG = d3.select(".startTimesData");
-        const marginStartTimes = { top: 30, right: 30, bottom: 70, left: 60 };
-        const widthStartTimes = +startTimesSVG.attr("width") - marginStartTimes.left - marginStartTimes.right;
-        const heightStartTimes = +startTimesSVG.attr("height") - marginStartTimes.top - marginStartTimes.bottom;
-
-        const gStartTimes = startTimesSVG.append("g").attr("transform", `translate(${marginStartTimes.left},${marginStartTimes.top})`);
-
-                const todayPageView = new Date();
-                const dayNamesPageView = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-
-                const last7DaysPageView = [];
-                for (let i = 6; i >= 0; i--) {
-                    const date = new Date(todayPageView);
-                    date.setDate(date.getDate() - i);
-                    last7DaysPageView.push({
-                        date: date,
-                        dayName: dayNamesPageView[date.getDay()],
-                        dateString: date.toISOString().split('T')[0]
-                    });
+        function calculateYDomain(maxValue) {
+            if (maxValue === 0) return [0, 1];
+            const exponent = Math.floor(Math.log10(maxValue));
+            const step = Math.pow(10, exponent);
+            const upperBound = Math.ceil(maxValue / step) * step;
+            if (upperBound <= 10) return [0, upperBound];
+            const niceSteps = [1, 2, 5, 10];
+            let selectedStep = step;
+            for (const s of niceSteps) {
+                const currentStep = s * Math.pow(10, exponent - 1);
+                if (Math.ceil(maxValue / currentStep) <= 10) {
+                    selectedStep = currentStep;
+                    break;
                 }
-
-        const dayCountsPageView = last7DaysPageView.reduce((acc, day) => {
-            acc[day.dateString] = 0;
-            return acc;
-        }, {});
-
-        startTimesData.forEach(d => {
-            const recordDate = new Date(d.timestamp).toISOString().split('T')[0];
-            if (dayCountsPageView.hasOwnProperty(recordDate)) {
-                dayCountsPageView[recordDate] += d.count || 0;
             }
-        });
+            return [0, Math.ceil(maxValue / selectedStep) * selectedStep];
+        }
 
-        const dayDataStartTimes = last7DaysPageView.map(day => ({
-            date: day.dateString,
-            dayName: day.dayName,
-            fullDayName: day.fullDayName,
-            count: dayCountsPageView[day.dateString] || 0
-        }));
+        function updatePageViewsChart(urlFilter = '') {
+            // Clear existing chart
+            startTimesSVG.selectAll("*").remove();
 
-        const xStartTimes = d3.scaleBand()
-            .domain(dayDataStartTimes.map(d => d.dayName))
-            .range([0, widthStartTimes])
-            .padding(0.3);
+            const gStartTimes = startTimesSVG.append("g")
+                .attr("transform", `translate(${marginStartTimes.left},${marginStartTimes.top})`);
 
-        const maxCountPageView = d3.max(dayDataStartTimes, d => d.count);
-        const yDomainStartTimes = calculateYDomain(maxCountPageView);
-        const yStartTimes = d3.scaleLinear()
-            .domain(yDomainStartTimes)
-            .nice()
-            .range([heightStartTimes, 0]);
+            const todayPageView = new Date();
+            const dayNamesPageView = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
-        gStartTimes.append("g")
-            .selectAll(".bar")
-            .data(dayDataStartTimes)
-            .enter().append("rect")
-            .attr("class", "bar")
-            .attr("x", d => xStartTimes(d.dayName))
-            .attr("y", d => yStartTimes(d.count))
-            .attr("width", xStartTimes.bandwidth())
-            .attr("height", d => heightStartTimes - yStartTimes(d.count))
-            .attr("rx", 5)
-            .attr("ry", 5)
-            .on("mouseover", function(event, d) {
-                d3.select(".tooltip")
-                    .style("opacity", 1)
-                    .html(`${d.fullDayName}<br>Date: ${d.date}<br>Views: ${d.count.toLocaleString()}`)
-                    .style("left", (event.pageX + 5) + "px")
-                    .style("top", (event.pageY - 28) + "px");
-            })
-            .on("mouseout", function() {
-                d3.select(".tooltip").style("opacity", 0);
+            const last7DaysPageView = [];
+            for (let i = 6; i >= 0; i--) {
+                const date = new Date(todayPageView);
+                date.setDate(date.getDate() - i);
+                last7DaysPageView.push({
+                    date: date,
+                    dayName: dayNamesPageView[date.getDay()],
+                    dateString: date.toISOString().split('T')[0]
+                });
+            }
+
+            // Filter page views by URL (partial match)
+            const dayCountsPageView = last7DaysPageView.reduce((acc, day) => {
+                acc[day.dateString] = 0;
+                return acc;
+            }, {});
+            pageViewsData.forEach(d => {
+                const recordDate = new Date(d.timestamp).toISOString().split('T')[0];
+                if (dayCountsPageView.hasOwnProperty(recordDate)) {
+                    if (urlFilter) {
+                        // Sum counts for URLs starting with or containing urlFilter
+                        const filteredCount = d.urls
+                            .filter(urlObj => urlObj.url.toLowerCase().includes(urlFilter.toLowerCase()))
+                            .reduce((sum, urlObj) => sum + (urlObj.count || 0), 0);
+                        dayCountsPageView[recordDate] += filteredCount;
+                    } else {
+                        // Use total count if no filter
+                        dayCountsPageView[recordDate] += d.count || 0;
+                    }
+                }
             });
 
-        gStartTimes.append("g")
-            .attr("class", "axis axis--x")
-            .attr("transform", `translate(0,${heightStartTimes})`)
-            .call(d3.axisBottom(xStartTimes))
-            .selectAll("text")
-            .style("text-anchor", "end")
-            .style("font-size", "10px")
-            .attr("dx", "-0.5em")
-            .attr("dy", "0.5em")
-            .attr("transform", "rotate(-45)");
+            const dayDataStartTimes = last7DaysPageView.map(day => ({
+                date: day.dateString,
+                dayName: day.dayName,
+                count: dayCountsPageView[day.dateString] || 0
+            }));
 
-        gStartTimes.append("g")
-            .attr("class", "axis axis--y")
-            .call(d3.axisLeft(yStartTimes)
-                .ticks(5)
-                .tickFormat(d => {
-                    if (yDomain[1] >= 1000) {
-                        return d3.format(".2s")(d).replace("G", "B");
-                    }
-                    return d;
-                }));
+            // Setup scales
+            const xStartTimes = d3.scaleBand()
+                .domain(dayDataStartTimes.map(d => d.dayName))
+                .range([0, widthStartTimes])
+                .padding(0.3);
 
+            const maxCountPageView = d3.max(dayDataStartTimes, d => d.count);
+            const yDomainStartTimes = calculateYDomain(maxCountPageView);
+            const yStartTimes = d3.scaleLinear()
+                .domain(yDomainStartTimes)
+                .nice()
+                .range([heightStartTimes, 0]);
+
+            // Draw bars
+            gStartTimes.selectAll(".bar")
+                .data(dayDataStartTimes)
+                .enter().append("rect")
+                .attr("class", "bar")
+                .attr("x", d => xStartTimes(d.dayName))
+                .attr("y", d => yStartTimes(d.count))
+                .attr("width", xStartTimes.bandwidth())
+                .attr("height", d => heightStartTimes - yStartTimes(d.count))
+                .attr("rx", 5)
+                .attr("ry", 5)
+                .on("mouseover", function(event, d) {
+                    d3.select(".tooltip")
+                        .style("opacity", 1)
+                        .html(`${d.dayName}<br>Date: ${d.date}<br>Views: ${d.count.toLocaleString()}`)
+                        .style("left", (event.pageX + 5) + "px")
+                        .style("top", (event.pageY - 28) + "px");
+                })
+                .on("mouseout", function() {
+                    d3.select(".tooltip").style("opacity", 0);
+                });
+
+            // Draw axes
+            gStartTimes.append("g")
+                .attr("class", "axis axis--x")
+                .attr("transform", `translate(0,${heightStartTimes})`)
+                .call(d3.axisBottom(xStartTimes))
+                .selectAll("text")
+                .style("text-anchor", "end")
+                .style("font-size", "10px")
+                .attr("dx", "-0.5em")
+                .attr("dy", "0.5em")
+                .attr("transform", "rotate(-45)");
+
+            gStartTimes.append("g")
+                .attr("class", "axis axis--y")
+                .call(d3.axisLeft(yStartTimes)
+                    .ticks(5)
+                    .tickFormat(d => {
+                        if (yDomainStartTimes[1] >= 1000) {
+                            return d3.format(".2s")(d).replace("G", "B");
+                        }
+                        return d;
+                    }));
+        }
+        updatePageViewsChart();
 
 
         const browserData = JSON.parse('{{ browser_data|escapejs }}');
