@@ -15,7 +15,7 @@ body.dark-mode {
 .navigationBar {
     transition: background-color 0.5s ease;
 }
-body.dark-mode .navigationBar, 
+body.dark-mode .navigationBar,
 body.light-mode .navigationBar {
     display: flex;
     flex-direction: row;

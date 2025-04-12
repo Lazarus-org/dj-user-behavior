@@ -106,7 +106,7 @@
         <div>
             <div>
                 <h1>
-                    Daily Session Durations
+                    Daily Session Durations Avg
                 </h1>
             </div>
             <svg class="startEndTimesData" width="950" height="400"></svg>
@@ -185,18 +185,18 @@
 
         function calculateYDomain(maxValue) {
             if (maxValue === 0) return [0, 1];
-            
+
             const exponent = Math.floor(Math.log10(maxValue));
             const step = Math.pow(10, exponent);
             const upperBound = Math.ceil(maxValue / step) * step;
-            
+
             if (upperBound <= 10) {
                 return [0, upperBound];
             }
-            
+
             const niceSteps = [1, 2, 5, 10];
             let selectedStep = step;
-            
+
             for (const s of niceSteps) {
                 const currentStep = s * Math.pow(10, exponent - 1);
                 if (Math.ceil(maxValue / currentStep) <= 10) {
@@ -204,7 +204,7 @@
                     break;
                 }
             }
-            
+
             return [0, Math.ceil(maxValue / selectedStep) * selectedStep];
         }
 
@@ -311,16 +311,16 @@
 
         function calculateYDomain(maxValue) {
             if (maxValue === 0) return [0, 1];
-            
+
             const exponent = Math.floor(Math.log10(maxValue));
             const step = Math.pow(10, exponent);
             const upperBound = Math.ceil(maxValue / step) * step;
-            
+
             if (upperBound <= 10) return [0, upperBound];
-            
+
             const niceSteps = [1, 2, 5, 10];
             let selectedStep = step;
-            
+
             for (const s of niceSteps) {
                 const currentStep = s * Math.pow(10, exponent - 1);
                 if (Math.ceil(maxValue / currentStep) <= 10) {
@@ -328,7 +328,7 @@
                     break;
                 }
             }
-            
+
             return [0, Math.ceil(maxValue / selectedStep) * selectedStep];
         }
 
@@ -752,7 +752,7 @@
             const dayData = startEndTimesData.find(d => d.day === day.dayName) || { duration: 0 };
             const durationMinutes = parseInt(dayData.duration) || 0;
             const durationHours = durationMinutes / 60;
-            
+
             return {
                 dayName: day.dayName,
                 date: day.dateString,
