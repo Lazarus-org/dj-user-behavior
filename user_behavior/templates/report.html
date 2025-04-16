@@ -419,7 +419,7 @@
             const filteredUrls = filter
                 ? allUrls.filter(url => url.toLowerCase().includes(filter.toLowerCase()))
                 : allUrls;
-            
+
             filteredUrls.forEach(url => {
                 const urlItem = document.createElement('div');
                 urlItem.className = 'url-item';
