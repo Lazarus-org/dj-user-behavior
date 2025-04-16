@@ -68,15 +68,18 @@
 
     <div class="pageView_card">
         <div class="url_content">
-            <input type="text" placeholder="Please enter the URL you want..." aria-label="Search" id="urlInput">
-            <img width="40" height="40" src="https://img.icons8.com/fluency-systems-regular/100/search--v1.png" alt="search--v1"/>
-        </div>
-        <div id="urlModal" class="modal">
-            <div class="modal-content">
-                <span class="close">&times;</span>
-                <div id="urlList">
-                </div>
-            </div>
+            <input
+                type="text"
+                placeholder="Search or select a URL ..."
+                aria-label="Search URLs"
+                id="urlInput"
+            >
+            <span class="dropdown-icon">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4 6L8 10L12 6" stroke="#FBF8FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </span>
+            <div class="custom-dropdown" id="urlDropdown"></div>
         </div>
         <div class="timeStartChart">
             <div>
@@ -389,13 +392,9 @@
             .text("Count");
 
 
-
-
         const pageViewsData = JSON.parse('{{ page_views|escapejs }}');
         const urlInput = document.getElementById('urlInput');
-        const urlModal = document.getElementById('urlModal');
-        const urlList = document.getElementById('urlList');
-        const closeModal = document.querySelector('.close');
+        const urlDropdown = document.getElementById('urlDropdown');
         const startTimesSVG = d3.select(".startTimesData");
         const marginStartTimes = { top: 30, right: 30, bottom: 70, left: 60 };
         const widthStartTimes = +startTimesSVG.attr("width") - marginStartTimes.left - marginStartTimes.right;
@@ -415,54 +414,54 @@
             return Array.from(urls);
         }
 
-        function showUrls() {
-            urlList.innerHTML = '';
-            allUrls.forEach(url => {
-                const urlItem = document.createElement('div');
-                urlItem.textContent = url;
-                urlItem.style.padding = '5px';
-                urlItem.style.cursor = 'pointer';
-                urlItem.style.color = '#110423';
-                urlItem.addEventListener('click', () => {
-                    urlInput.value = url;
-                    urlModal.style.display = 'none';
-                    updatePageViewsChart(url);
-                });
-                urlList.appendChild(urlItem);
-            });
-            urlModal.style.display = 'block';
-        }
-
-        function filterUrls() {
-            const searchTerm = urlInput.value.toLowerCase();
-            urlList.innerHTML = '';
-            const filteredUrls = allUrls.filter(url => url.toLowerCase().includes(searchTerm));
+        function populateUrlDropdown(filter = '') {
+            urlDropdown.innerHTML = '';
+            const filteredUrls = filter
+                ? allUrls.filter(url => url.toLowerCase().includes(filter.toLowerCase()))
+                : allUrls;
+            
             filteredUrls.forEach(url => {
                 const urlItem = document.createElement('div');
+                urlItem.className = 'url-item';
                 urlItem.textContent = url;
-                urlItem.style.padding = '5px';
-                urlItem.style.cursor = 'pointer';
-                urlItem.style.color = '#110423';
                 urlItem.addEventListener('click', () => {
                     urlInput.value = url;
-                    urlModal.style.display = 'none';
+                    urlDropdown.style.display = 'none';
                     updatePageViewsChart(url);
                 });
-                urlList.appendChild(urlItem);
+                urlDropdown.appendChild(urlItem);
             });
+
+            urlDropdown.style.display = filteredUrls.length > 0 ? 'block' : 'none';
         }
 
-        urlInput.addEventListener('focus', showUrls);
-        urlInput.addEventListener('input', filterUrls);
-        urlInput.addEventListener('change', () => updatePageViewsChart(urlInput.value));
-
-        closeModal.addEventListener('click', () => {
-            urlModal.style.display = 'none';
+        urlInput.addEventListener('click', () => {
+            populateUrlDropdown(urlInput.value.trim());
         });
 
-        window.addEventListener('click', (event) => {
-            if (event.target === urlModal) {
-                urlModal.style.display = 'none';
+        urlInput.addEventListener('focus', () => {
+            populateUrlDropdown(urlInput.value.trim());
+        });
+
+        let debounceTimeout;
+        urlInput.addEventListener('input', () => {
+            clearTimeout(debounceTimeout);
+            debounceTimeout = setTimeout(() => {
+                const filter = urlInput.value.trim();
+                populateUrlDropdown(filter);
+            }, 300);
+        });
+
+        urlInput.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                urlDropdown.style.display = 'none';
+                updatePageViewsChart(urlInput.value.trim());
+            }
+        });
+
+        document.addEventListener('click', (event) => {
+            if (!urlInput.contains(event.target) && !urlDropdown.contains(event.target)) {
+                urlDropdown.style.display = 'none';
             }
         });
 
@@ -485,7 +484,7 @@
         }
 
         function updatePageViewsChart(urlFilter = '') {
-            // Clear existing chart
+
             startTimesSVG.selectAll("*").remove();
 
             const gStartTimes = startTimesSVG.append("g")
@@ -505,7 +504,6 @@
                 });
             }
 
-            // Filter page views by URL (partial match)
             const dayCountsPageView = last7DaysPageView.reduce((acc, day) => {
                 acc[day.dateString] = 0;
                 return acc;
@@ -514,13 +512,11 @@
                 const recordDate = new Date(d.timestamp).toISOString().split('T')[0];
                 if (dayCountsPageView.hasOwnProperty(recordDate)) {
                     if (urlFilter) {
-                        // Sum counts for URLs starting with or containing urlFilter
                         const filteredCount = d.urls
                             .filter(urlObj => urlObj.url.toLowerCase().includes(urlFilter.toLowerCase()))
                             .reduce((sum, urlObj) => sum + (urlObj.count || 0), 0);
                         dayCountsPageView[recordDate] += filteredCount;
                     } else {
-                        // Use total count if no filter
                         dayCountsPageView[recordDate] += d.count || 0;
                     }
                 }
@@ -532,7 +528,6 @@
                 count: dayCountsPageView[day.dateString] || 0
             }));
 
-            // Setup scales
             const xStartTimes = d3.scaleBand()
                 .domain(dayDataStartTimes.map(d => d.dayName))
                 .range([0, widthStartTimes])
@@ -545,7 +540,6 @@
                 .nice()
                 .range([heightStartTimes, 0]);
 
-            // Draw bars
             gStartTimes.selectAll(".bar")
                 .data(dayDataStartTimes)
                 .enter().append("rect")
@@ -567,7 +561,6 @@
                     d3.select(".tooltip").style("opacity", 0);
                 });
 
-            // Draw axes
             gStartTimes.append("g")
                 .attr("class", "axis axis--x")
                 .attr("transform", `translate(0,${heightStartTimes})`)
@@ -591,7 +584,6 @@
                     }));
         }
         updatePageViewsChart();
-
 
         const browserData = JSON.parse('{{ browser_data|escapejs }}');
         const container = d3.select(".browserData").classed("pie-container", true);
